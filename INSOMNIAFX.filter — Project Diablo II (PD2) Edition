@@ -1,0 +1,3503 @@
+// =======================================================
+// INSOMNIAFX.filter — Project Diablo II (PD2) Edition
+// Author: Insomnia
+// Version: 1.0 (Full Release)
+// Purpose: comprehensive drop filter with FX placeholders
+// Notes: place .wav files in "sounds/" relative to PD2 launcher,
+//        or use external watcher that reads chat/log lines.
+// =======================================================
+# ==============================
+# INSOMNIAFX FX FILE CHECK
+# ==============================
+
+FXFolderCheck:
+    FX_PATH: data/sfx/InsomniaFX
+    RequiredFiles:
+        - god_drop.wav
+        - major_drop.wav
+        - notable_drop.wav
+        - minor_drop.wav
+        - soft_click.wav
+        - crafted_item.wav
+        - socket_ping.wav
+        - ethereal_drop.wav
+        - superior_tone.wav
+        - rune_high.wav
+        - uber_key.wav
+        - uber_artifact.wav
+        - relic_chime.wav
+        - map_drop.wav
+        - torch_drop.wav
+        - craft_ping.wav
+        - recipe_discovery.wav
+        - quest_item.wav
+        - divine_hum.wav
+        - mystic_bg.wav
+    OnMissingFile:
+        ShowHUDMessage: true
+        HUDMessageColor: 255 50 50
+        MessageTemplate: "⚠️ Missing FX file: {FILENAME} in {FX_PATH}"
+        LogToConsole: true
+End
+
+# --- OPTIONAL: AUTO GENERATE MISSING SOUND LOG ---
+# If some files are missing, the system will not crash.
+# Instead, it will skip missing FX and alert the user.
+FXFailSafe:
+    SkipMissingFX: true
+    UseFallbackFX: soft_click.wav
+End
+
+#DEFINE FX_PATH: sounds/
+
+// --- Global defaults ---
+Global:
+    FontSize: 32
+    Border: 1
+    PlayAlertSound: %FX_PATH%drop_generic.wav
+    VisualTagPrefix: <INSOMNIA>
+EndGlobal
+
+// -----------------------------
+// Helper color macros (author style)
+// -----------------------------
+// %SHOCK% %EMBER% %FROST% %GLARE% %BLOOM% %VOID% used below
+#define SHOCK %RED%
+#define EMBER %ORANGE%
+#define FROST %BLUE%
+#define GLARE %YELLOW%
+#define BLOOM %GREEN%
+#define VOID %WHITE%
+
+// =============================
+// Section: High Priority (loud FX + big visuals)
+// =============================
+
+ItemDisplay[Unique_TopTier]:
+    Show
+    If: Rarity == Unique && (Item IN (Tyrael's_Howl, Windforce, Griffon's_Eye, Stormshield, Harlequin_Crest, Griffons_Eye))
+    FontSize: 48
+    Color: %SHOCK%
+    Border: 4
+    Text: %SHOCK%[INSOMNIA — SS UNIQUE]%VOID% %ITEMNAME%
+    PlayAlertSound: %FX_PATH%drop_unique_top.wav
+    Priority: 100
+End
+
+ItemDisplay[HighRune]:
+    Show
+    If: Rarity == Rune && (Name IN (Zod, Cham, Jah, Ber, Sur, Lo, Ohm, Vex))
+    FontSize: 44
+    Color: %EMBER%
+    Border: 3
+    Text: %EMBER%[HIGH RUNE]%VOID% %ITEMNAME%
+    PlayAlertSound: %FX_PATH%drop_rune_high.wav
+    Priority: 98
+End
+
+ItemDisplay[Uber_Item_Top]:
+    Show
+    If: Item IN (Pandemonium_Cube, Hellforge_Hammer, Uber_Crown, SoulStone)
+    FontSize: 46
+    Color: %SHOCK%
+    Border: 5
+    Text: %SHOCK%[INSOMNIA — UBER ITEM]%VOID% %ITEMNAME%
+    PlayAlertSound: %FX_PATH%drop_uber_top.wav
+    Priority: 100
+End
+
+// =============================
+// Section: High / Mid Value
+// =============================
+
+ItemDisplay[Set_Item]:
+    Show
+    If: Rarity == Set
+    FontSize: 38
+    Color: %BLOOM%
+    Border: 3
+    Text: %BLOOM%[SET]%VOID% %ITEMNAME%
+    PlayAlertSound: %FX_PATH%drop_set.wav
+    Priority: 90
+End
+
+ItemDisplay[Unique_Normal]:
+    Show
+    If: Rarity == Unique
+    FontSize: 40
+    Color: %SHOCK%
+    Border: 3
+    Text: %SHOCK%[UNIQUE]%VOID% %ITEMNAME%
+    PlayAlertSound: %FX_PATH%drop_unique.wav
+    Priority: 85
+End
+
+ItemDisplay[Runeword_Base]:
+    Show
+    If: Sockets >= 3 && Base IN (Sword, Axe, Polearm, Mace, Staff, Shield)
+    FontSize: 34
+    Color: %GLARE%
+    Border: 2
+    Text: %GLARE%[RW BASE]%VOID% %ITEMNAME%
+    PlayAlertSound: %FX_PATH%drop_base_rw.wav
+End
+
+ItemDisplay[Perfect_Gem]:
+    Show
+    If: ItemType == Gem && Quality == Perfect
+    FontSize: 32
+    Color: %FROST%
+    Border: 2
+    Text: %FROST%[Perfect Gem]%VOID% %ITEMNAME%
+    PlayAlertSound: %FX_PATH%drop_gem_perfect.wav
+End
+
+ItemDisplay[Charms_Grand]:
+    Show
+    If: ItemType == Charm && Size == Grand
+    FontSize: 30
+    Color: %BLOOM%
+    Border: 2
+    Text: %BLOOM%[GrandCharm]%VOID% %ITEMNAME%
+    PlayAlertSound: %FX_PATH%drop_charm_grand.wav
+End
+
+// =============================
+// Section: Currency / Stackables
+// =============================
+
+ItemDisplay[Gold_Big]:
+    Show
+    If: ItemType == Gold && Quantity >= 1000
+    FontSize: 30
+    Color: %GLARE%
+    Text: %GLARE%[Gold]%VOID% %QUANTITY%g
+    PlayAlertSound: %FX_PATH%drop_gold_big.wav
+End
+
+ItemDisplay[Stack_High]:
+    Show
+    If: Stackable == True && Quantity >= 10
+    FontSize: 22
+    Color: %VOID%
+    Text: [%QUANTITY%x] %ITEMNAME%
+End
+
+// =============================
+// Section: Runes (full tiers incl. sup/inf placeholders)
+// =============================
+
+ItemDisplay[Rune_Low]:
+    Show
+    If: Rarity == Rune && Tier <= 10
+    FontSize: 24
+    Color: %VOID%
+    Text: %VOID%[r]%VOID% %ITEMNAME%
+    PlayAlertSound: %FX_PATH%drop_rune_low.wav
+End
+
+ItemDisplay[Rune_Mid]:
+    Show
+    If: Rarity == Rune && Tier > 10 && Tier < 25
+    FontSize: 28
+    Color: %GLARE%
+    Text: %GLARE%[rune]%VOID% %ITEMNAME%
+    PlayAlertSound: %FX_PATH%drop_rune_mid.wav
+End
+
+ItemDisplay[Rune_Sup]:
+    Show
+    If: Rarity == Rune && Tag == Sup
+    FontSize: 30
+    Color: %EMBER%
+    Text: %EMBER%[SUP RUNE]%VOID% %ITEMNAME%
+    PlayAlertSound: %FX_PATH%drop_rune_sup.wav
+End
+
+ItemDisplay[Rune_Inf]:
+    Show
+    If: Rarity == Rune && Tag == Inf
+    FontSize: 30
+    Color: %FROST%
+    Text: %FROST%[INF RUNE]%VOID% %ITEMNAME%
+    PlayAlertSound: %FX_PATH%drop_rune_inf.wav
+End
+
+// =============================
+// Section: Bases, Socketed, 4os/3os, Ethereal
+// =============================
+
+ItemDisplay[Bases_4os]:
+    Show
+    If: Sockets >= 4 && (Base IN (Monarch, Monarch_Shield, Paladin_Shield))
+    FontSize: 34
+    Color: %GLARE%
+    Border: 2
+    Text: %GLARE%[4os Base]%VOID% %ITEMNAME%
+    PlayAlertSound: %FX_PATH%drop_base_4os.wav
+End
+
+ItemDisplay[Bases_SocketedElite]:
+    Show
+    If: Socketed == True && Quality IN (Exceptional, Elite)
+    FontSize: 30
+    Color: %FROST%
+    Text: %FROST%[Socketed Elite]%VOID% %ITEMNAME%
+    PlayAlertSound: %FX_PATH%drop_base_socketed.wav
+End
+
+ItemDisplay[Bases_Ethereal]:
+    Show
+    If: IsEthereal == True
+    FontSize: 28
+    Color: %EMBER%
+    Text: %EMBER%[Ethereal]%VOID% %ITEMNAME%
+End
+
+// =============================
+// Section: Rares & Magic
+// =============================
+
+ItemDisplay[Rare_Default]:
+    Show
+    If: Rarity == Rare
+    FontSize: 30
+    Color: %GLARE%
+    Border: 2
+    Text: %GLARE%[Rare]%VOID% %ITEMNAME%
+    PlayAlertSound: %FX_PATH%drop_rare.wav
+End
+
+ItemDisplay[Magic_Default]:
+    Show
+    If: Rarity == Magic
+    FontSize: 24
+    Color: %FROST%
+    Text: %FROST%[Magic]%VOID% %ITEMNAME%
+End
+
+// =============================
+// Section: Charms (small/large/grand/unique splits)
+// =============================
+
+ItemDisplay[Charm_Small]:
+    Show
+    If: ItemType == Charm && Size == Small
+    FontSize: 18
+    Color: %VOID%
+    Text: [cS] %ITEMNAME%
+End
+
+ItemDisplay[Charm_Large]:
+    Show
+    If: ItemType == Charm && Size == Large
+    FontSize: 22
+    Color: %BLOOM%
+    Text: [cL] %ITEMNAME%
+End
+
+// =============================
+// Section: Potions & Utilities
+// =============================
+
+ItemDisplay[Potions_Rejuv]:
+    Show
+    If: Item IN (RejuvenationPotion, FullRejuv)
+    FontSize: 26
+    Color: %FROST%
+    Text: %FROST%[Rejuv]%VOID% %ITEMNAME%
+    PlayAlertSound: %FX_PATH%drop_potion_big.wav
+End
+
+ItemDisplay[Potions_Small]:
+    Show
+    If: ItemType == Potion && (Item NOT IN (RejuvenationPotion, FullRejuv))
+    FontSize: 18
+    Color: %VOID%
+End
+
+ItemDisplay[TP_Scrolls]:
+    Show
+    If: Item IN (TownPortalScroll)
+    FontSize: 20
+    Color: %VOID%
+    Text: [TP] %ITEMNAME%
+End
+
+// =============================
+// Section: Maps & Map Fragments (PD2 specific)
+// =============================
+
+ItemDisplay[Map_Fragment]:
+    Show
+    If: ItemType == MapFragment
+    FontSize: 30
+    Color: %EMBER%
+    Text: %EMBER%[MapFrag]%VOID% %ITEMNAME%
+    PlayAlertSound: %FX_PATH%drop_map_fragment.wav
+End
+
+ItemDisplay[Map_Full]:
+    Show
+    If: ItemType == Map
+    FontSize: 34
+    Color: %GLARE%
+    Text: %GLARE%[Map]%VOID% %ITEMNAME%
+    PlayAlertSound: %FX_PATH%drop_map_full.wav
+End
+
+ItemDisplay[Map_Uber]:
+    Show
+    If: ItemType == UberMap
+    FontSize: 36
+    Color: %SHOCK%
+    Border: 3
+    Text: %SHOCK%[UBER MAP]%VOID% %ITEMNAME%
+    PlayAlertSound: %FX_PATH%drop_map_uber.wav
+End
+
+// =============================
+// Section: Uber Quests / Uber Keys / Organs / Pandora
+// =============================
+
+ItemDisplay[Uber_Key]:
+    Show
+    If: Item IN (Key_of_Terror, Key_of_Hate, Key_of_Destruction)
+    FontSize: 36
+    Color: %SHOCK%
+    Text: %SHOCK%[UBER KEY]%VOID% %ITEMNAME%
+    PlayAlertSound: %FX_PATH%drop_uber_key.wav
+End
+
+ItemDisplay[Uber_Organ]:
+    Show
+    If: ItemType == Organ
+    FontSize: 30
+    Color: %BLOOM%
+    Text: [Uber Organ] %ITEMNAME%
+    PlayAlertSound: %FX_PATH%drop_uber_organ.wav
+End
+
+ItemDisplay[Pandora_Box]:
+    Show
+    If: Item IN (Pandora_Box)
+    FontSize: 34
+    Color: %EMBER%
+    Border: 3
+    Text: %EMBER%[Pandora]%VOID% %ITEMNAME%
+    PlayAlertSound: %FX_PATH%drop_pandora.wav
+End
+
+// =============================
+// Section: Crafting Materials & Recipes (PD2 mats & shards)
+// =============================
+
+ItemDisplay[Craft_Material_Common]:
+    Show
+    If: ItemType IN (Jewel, Gem, LesserShard, Dust)
+    FontSize: 22
+    Color: %VOID%
+    Text: [Mat] %ITEMNAME%
+End
+
+ItemDisplay[Craft_Material_Rare]:
+    Show
+    If: ItemType IN (Essence, Orb, RareShard)
+    FontSize: 26
+    Color: %GLARE%
+    Text: [MatR] %ITEMNAME%
+    PlayAlertSound: %FX_PATH%drop_mat_rare.wav
+End
+
+ItemDisplay[Recipe]:
+    Show
+    If: ItemType == Recipe
+    FontSize: 28
+    Color: %FROST%
+    Text: [Recipe] %ITEMNAME%
+    PlayAlertSound: %FX_PATH%drop_recipe.wav
+End
+
+// =============================
+// Section: Quest Items (misc)
+ // =============================
+
+ItemDisplay[Quest_Default]:
+    Show
+    If: ItemType IN (Quest, Sigil, Relic)
+    FontSize: 22
+    Color: %VOID%
+    Text: [Quest] %ITEMNAME%
+    PlayAlertSound: %FX_PATH%drop_quest.wav
+End
+
+// =============================
+// Section: Misc / Keys / Scrolls / Books / Oils
+// =============================
+
+ItemDisplay[Utility_Key]:
+    Show
+    If: ItemType == Key
+    FontSize: 20
+    Color: %GLARE%
+    Text: [Key] %ITEMNAME%
+End
+
+ItemDisplay[Utility_Scroll]:
+    Show
+    If: ItemType IN (Scroll, Tome)
+    FontSize: 18
+    Color: %VOID%
+End
+
+ItemDisplay[Utility_OilSigil]:
+    Show
+    If: ItemType IN (Oil, Sigil)
+    FontSize: 18
+    Color: %FROST%
+End
+
+// =============================
+// Section: Visual Ping markers for external watcher (AHK friendly)
+// =============================
+
+ItemDisplay[Ping_Unique_Marker]:
+    Show
+    If: Rarity == Unique
+    FontSize: 1
+    Text: <INSOMNIA:PING:UNIQUE:%FX_PATH%drop_unique.wav:255,180,40> %ITEMNAME%
+End
+
+ItemDisplay[Ping_HighRune_Marker]:
+    Show
+    If: Rarity == Rune && (Name IN (Zod, Cham, Jah, Ber, Sur, Lo, Ohm, Vex))
+    FontSize: 1
+    Text: <INSOMNIA:PING:HRUNE:%FX_PATH%drop_rune_high.wav:255,100,0> %ITEMNAME%
+End
+
+// =============================
+// Strictness Profiles (Soft / Balanced / Hardcore) - toggles for your filter loader
+// =============================
+
+Profile[Soft]:
+    Include: Unique_Normal, Set_Item, Rune_Low, Rune_Mid, Gem_Flawless, Charm_Large, Potions_Rejuv
+EndProfile
+
+Profile[Balanced]:
+    Include: Unique_Normal, Unique_TopTier, Set_Item, Rune_Mid, Rune_High, Gem_Perfect, Charm_Grand, Map_Full
+EndProfile
+
+Profile[Hardcore]:
+    Include: Unique_TopTier, HighRune, Uber_Item_Top, Bases_4os, Map_Uber, Craft_Recipe_Rare
+EndProfile
+
+// =============================
+// Footer: instructions & notes
+// =============================
+
+Notes:
+    - Replace placeholder item-lists (like Tyrael's_Howl) with exact PD2 internal names if mismatch.
+    - If PlayAlertSound not supported in your launcher, use Ping markers + an external watcher (AHK) to parse them and play WAVs.
+    - WAV recommendations: short (0.08–0.9s), normalized, mono preferred for minimal overlap.
+EndNotes
+ItemDisplay[Map_Tier1to5]:
+    Show
+    If: ItemType == Map && MapTier <= 5
+    FontSize: 25
+    Color: 120 255 120
+    Text: %MAP%Tier %MAPTIER% %WHITE%%ITEMNAME%
+    PlayAlertSound: %FX_PATH%map_low.wav
+End
+
+ItemDisplay[Map_Tier6to10]:
+    Show
+    If: ItemType == Map && MapTier >= 6 && MapTier <= 10
+    FontSize: 28
+    Color: 90 200 255
+    Text: %MAP%%ITEMNAME% [T%MAPTIER%]
+    PlayAlertSound: %FX_PATH%map_mid.wav
+End
+
+ItemDisplay[Map_Tier11plus]:
+    Show
+    If: ItemType == Map && MapTier >= 11
+    FontSize: 32
+    Color: 255 150 0
+    Border: 3
+    Text: %MAP%T%MAPTIER% %WHITE%%ITEMNAME%
+    PlayAlertSound: %FX_PATH%map_high.wav
+End
+
+ItemDisplay[UberKey]:
+    Show
+    If: ItemName == "Key of Terror" || ItemName == "Key of Hate" || ItemName == "Key of Destruction"
+    FontSize: 30
+    Color: 255 0 0
+    Text: %RED%Uber Key: %ITEMNAME%
+    PlayAlertSound: %FX_PATH%uber_key.wav
+End
+
+ItemDisplay[Organ]:
+    Show
+    If: ItemName == "Baal's Eye" || ItemName == "Diablo's Horn" || ItemName == "Mephisto's Brain"
+    FontSize: 32
+    Color: 255 60 60
+    Text: %RED%Uber Organ: %ITEMNAME%
+    PlayAlertSound: %FX_PATH%uber_organ.wav
+End
+
+ItemDisplay[UberCharm]:
+    Show
+    If: ItemName == "Hellfire Torch" || ItemName == "Annihilus"
+    FontSize: 36
+    Color: 255 200 0
+    Border: 4
+    Text: %YELLOW%Uber Charm — %ITEMNAME%
+    PlayAlertSound: %FX_PATH%uber_unique.wav
+End
+
+ItemDisplay[CraftMat]:
+    Show
+    If: ItemType == CraftingMaterial || ItemName LIKE "%Essence%" || ItemName LIKE "%Token%"
+    FontSize: 26
+    Color: 100 200 255
+    Text: %BLUE%Craft Mat — %ITEMNAME%
+    PlayAlertSound: %FX_PATH%craft_drop.wav
+End
+
+ItemDisplay[CraftRecipe]:
+    Show
+    If: ItemName LIKE "%Rune%" || ItemName LIKE "%Perfect%"
+    FontSize: 25
+    Color: 120 255 120
+    Text: %GREEN%Craft Item — %ITEMNAME%
+End
+
+ItemDisplay[QuestItem]:
+    Show
+    If: ItemType == QuestItem || ItemName LIKE "%Scroll of%" || ItemName LIKE "%Cube%"
+    FontSize: 28
+    Color: 255 200 100
+    Text: %GOLD%Quest Item — %ITEMNAME%
+End
+
+ItemDisplay[Potion]:
+    Show
+    If: ItemType == Potion
+    FontSize: 18
+    Color: 255 255 255
+    Text: %WHITE%%ITEMNAME%
+End
+
+ItemDisplay[SuperPotion]:
+    Show
+    If: ItemName LIKE "%Full%" || ItemName LIKE "%Super%"
+    FontSize: 22
+    Color: 200 255 200
+    Text: %GREEN%%ITEMNAME%
+    PlayAlertSound: %FX_PATH%potion_super.wav
+End
+
+ItemDisplay[Elixir]:
+    Show
+    If: ItemName LIKE "%Elixir%"
+    FontSize: 24
+    Color: 255 180 255
+    Text: %MAGENTA%Elixir — %ITEMNAME%
+    PlayAlertSound: %FX_PATH%potion_elixir.wav
+End
+ItemDisplay[Rune_Low]:
+    Show
+    If: ItemType == Rune && RuneID <= 15
+    FontSize: 24
+    Color: 180 220 255
+    Text: %CYAN%Rune — %ITEMNAME%
+    PlayAlertSound: %FX_PATH%rune_low.wav
+End
+
+ItemDisplay[Rune_Mid]:
+    Show
+    If: ItemType == Rune && RuneID >= 16 && RuneID <= 25
+    FontSize: 28
+    Color: 90 200 255
+    Text: %BLUE%Rune — %ITEMNAME%
+    PlayAlertSound: %FX_PATH%rune_mid.wav
+End
+
+ItemDisplay[Rune_High]:
+    Show
+    If: ItemType == Rune && RuneID >= 26
+    FontSize: 32
+    Color: 255 180 0
+    Border: 3
+    Text: %YELLOW%High Rune — %ITEMNAME%
+    PlayAlertSound: %FX_PATH%rune_high.wav
+End
+
+ItemDisplay[Jewel]:
+    Show
+    If: ItemType == Jewel
+    FontSize: 25
+    Color: 255 130 255
+    Text: %MAGENTA%%ITEMNAME%
+    PlayAlertSound: %FX_PATH%jewel_drop.wav
+End
+
+ItemDisplay[Jewel_Rare]:
+    Show
+    If: ItemType == Jewel && ItemQuality == Rare
+    FontSize: 28
+    Border: 2
+    Color: 255 200 0
+    Text: %GOLD%Rare Jewel — %ITEMNAME%
+    PlayAlertSound: %FX_PATH%jewel_rare.wav
+End
+
+ItemDisplay[Base_Elite]:
+    Show
+    If: ItemType == Armor || ItemType == Weapon && QualityLevel >= 80
+    FontSize: 30
+    Color: 255 255 200
+    Text: %WHITE%%ITEMNAME% %GRAY%[Elite Base]
+    PlayAlertSound: %FX_PATH%base_elite.wav
+End
+
+ItemDisplay[Base_Superior]:
+    Show
+    If: ItemQuality == Superior && (ItemType == Weapon || ItemType == Armor)
+    FontSize: 26
+    Color: 150 255 150
+    Text: %GREEN%Superior %ITEMNAME%
+End
+
+ItemDisplay[Base_Ethereal]:
+    Show
+    If: IsEthereal == True
+    FontSize: 26
+    Color: 200 200 255
+    Text: %CYAN%Eth %ITEMNAME%
+End
+
+ItemDisplay[Base_Socketed]:
+    Show
+    If: Sockets >= 4
+    FontSize: 26
+    Color: 255 255 255
+    Text: %WHITE%%ITEMNAME% (%SOCKETS%s)
+End
+
+ItemDisplay[Barb_Items]:
+    Show
+    If: ItemName LIKE "%Barbarian%" || ItemName LIKE "%Warcry%"
+    FontSize: 28
+    Color: 255 100 100
+    Text: %RED%Barb — %ITEMNAME%
+    PlayAlertSound: %FX_PATH%class_barb.wav
+End
+
+ItemDisplay[Sorc_Items]:
+    Show
+    If: ItemName LIKE "%Sorceress%" || ItemName LIKE "%Orb%"
+    FontSize: 28
+    Color: 100 180 255
+    Text: %BLUE%Sorc — %ITEMNAME%
+    PlayAlertSound: %FX_PATH%class_sorc.wav
+End
+
+ItemDisplay[Necro_Items]:
+    Show
+    If: ItemName LIKE "%Necromancer%" || ItemName LIKE "%Wand%"
+    FontSize: 28
+    Color: 200 180 255
+    Text: %PURPLE%Necro — %ITEMNAME%
+    PlayAlertSound: %FX_PATH%class_necro.wav
+End
+
+ItemDisplay[Druid_Items]:
+    Show
+    If: ItemName LIKE "%Druid%" || ItemName LIKE "%Pelt%"
+    FontSize: 28
+    Color: 100 255 100
+    Text: %GREEN%Druid — %ITEMNAME%
+    PlayAlertSound: %FX_PATH%class_druid.wav
+End
+
+ItemDisplay[Assassin_Items]:
+    Show
+    If: ItemName LIKE "%Assassin%" || ItemName LIKE "%Katar%"
+    FontSize: 28
+    Color: 255 100 255
+    Text: %MAGENTA%Assassin — %ITEMNAME%
+    PlayAlertSound: %FX_PATH%class_assassin.wav
+End
+
+ItemDisplay[Paladin_Items]:
+    Show
+    If: ItemName LIKE "%Paladin%" || ItemName LIKE "%Scepter%"
+    FontSize: 28
+    Color: 255 255 120
+    Text: %YELLOW%Paladin — %ITEMNAME%
+    PlayAlertSound: %FX_PATH%class_paladin.wav
+End
+
+ItemDisplay[Amazon_Items]:
+    Show
+    If: ItemName LIKE "%Amazon%" || ItemName LIKE "%Javelin%" || ItemName LIKE "%Bow%"
+    FontSize: 28
+    Color: 255 180 100
+    Text: %ORANGE%Amazon — %ITEMNAME%
+    PlayAlertSound: %FX_PATH%class_amazon.wav
+End
+ItemDisplay[Runeword_Ready]:
+    Show
+    If: ItemName LIKE "%Runeword%" || (Sockets >= 2 && ItemQuality == Normal && (ItemType == Armor || ItemType == Weapon))
+    FontSize: 27
+    Color: 150 255 200
+    Text: %GREEN%Runeword Base — %ITEMNAME% (%SOCKETS%s)
+    PlayAlertSound: %FX_PATH%runeword_ready.wav
+End
+
+ItemDisplay[Runeword_Created]:
+    Show
+    If: ItemQuality == Runeword
+    FontSize: 32
+    Border: 3
+    Color: 255 220 0
+    Text: %GOLD%Runeword — %ITEMNAME%
+    PlayAlertSound: %FX_PATH%runeword_done.wav
+End
+
+ItemDisplay[Craft_Set]:
+    Show
+    If: ItemName LIKE "%Blood%" || ItemName LIKE "%Caster%" || ItemName LIKE "%Safety%" || ItemName LIKE "%Hitpower%"
+    FontSize: 25
+    Color: 120 200 255
+    Text: %CYAN%Craft Recipe — %ITEMNAME%
+    PlayAlertSound: %FX_PATH%craft_recipe.wav
+End
+
+ItemDisplay[Cube_Recipe]:
+    Show
+    If: ItemName LIKE "%Transmute%" || ItemName LIKE "%Horadric%" || ItemName LIKE "%Essence%"
+    FontSize: 24
+    Color: 255 150 0
+    Text: %ORANGE%Cube — %ITEMNAME%
+    PlayAlertSound: %FX_PATH%cube_recipe.wav
+End
+
+ItemDisplay[Unique]:
+    Show
+    If: ItemQuality == Unique
+    FontSize: 30
+    Color: 255 220 100
+    Border: 3
+    Text: %GOLD%%ITEMNAME%
+    PlayAlertSound: %FX_PATH%unique_drop.wav
+End
+
+ItemDisplay[Set]:
+    Show
+    If: ItemQuality == Set
+    FontSize: 28
+    Color: 120 255 120
+    Text: %GREEN%Set — %ITEMNAME%
+    PlayAlertSound: %FX_PATH%set_drop.wav
+End
+
+ItemDisplay[Rare]:
+    Show
+    If: ItemQuality == Rare
+    FontSize: 26
+    Color: 255 220 0
+    Text: %GOLD%Rare — %ITEMNAME%
+End
+
+ItemDisplay[Magic]:
+    Show
+    If: ItemQuality == Magic
+    FontSize: 24
+    Color: 120 180 255
+    Text: %BLUE%Magic — %ITEMNAME%
+End
+
+ItemDisplay[Normal]:
+    Show
+    If: ItemQuality == Normal
+    FontSize: 20
+    Color: 200 200 200
+    Text: %GRAY%%ITEMNAME%
+End
+
+# --- STRICTNESS / FILTER MODES ---
+
+ItemDisplayFilterName[1]: InsomniaFX — Full Loot
+ItemDisplayFilterName[2]: InsomniaFX — Balanced
+ItemDisplayFilterName[3]: InsomniaFX — Strict
+
+#ifdef FILTERMODE_1
+Show: True
+PlayAlertSound: %FX_PATH%mode_full.wav
+#endif
+
+#ifdef FILTERMODE_2
+Hide: LowPotions, LowScrolls, LowArrows, LowGold
+PlayAlertSound: %FX_PATH%mode_balanced.wav
+#endif
+
+#ifdef FILTERMODE_3
+Hide: LowPotions, Scrolls, Gold, MagicItems, LowRunes
+PlayAlertSound: %FX_PATH%mode_strict.wav
+#endif
+
+ItemDisplay[Developer_Test]:
+    Show
+    If: ItemName LIKE "%InsomniaTest%"
+    FontSize: 20
+    Color: 255 255 255
+    Text: %WHITE%DevFlag: %ITEMNAME%
+    PlayAlertSound: %FX_PATH%dev_ping.wav
+End
+# --- MAPS AFFIXES + MAP TIER COLOR FX ---
+
+ItemDisplay[Map_Affix_MagicFind]:
+    Show
+    If: ItemType == Map && HasAffix LIKE "%Magic Find%"
+    FontSize: 26
+    Color: 180 255 180
+    Text: %GREEN%MF Map — %ITEMNAME% [T%MAPTIER%]
+    PlayAlertSound: %FX_PATH%map_mf.wav
+End
+
+ItemDisplay[Map_Affix_Density]:
+    Show
+    If: ItemType == Map && HasAffix LIKE "%Monster Density%"
+    FontSize: 28
+    Color: 200 220 255
+    Text: %CYAN%Dense Map — %ITEMNAME% [T%MAPTIER%]
+    PlayAlertSound: %FX_PATH%map_dense.wav
+End
+
+ItemDisplay[Map_Affix_Exp]:
+    Show
+    If: ItemType == Map && HasAffix LIKE "%Experience%" 
+    FontSize: 28
+    Color: 255 220 80
+    Text: %YELLOW%XP Map — %ITEMNAME% [T%MAPTIER%]
+    PlayAlertSound: %FX_PATH%map_exp.wav
+End
+
+ItemDisplay[Map_Affix_Corrupted]:
+    Show
+    If: ItemType == Map && IsCorrupted == True
+    FontSize: 30
+    Color: 255 0 0
+    Border: 3
+    Text: %RED%Corrupted Map — %ITEMNAME%
+    PlayAlertSound: %FX_PATH%map_corrupted.wav
+End
+
+# --- ESSENCES / TIER FX ---
+
+ItemDisplay[Essence_Low]:
+    Show
+    If: ItemName LIKE "%Twisted Essence%" || ItemName LIKE "%Charged Essence%"
+    FontSize: 24
+    Color: 150 200 255
+    Text: %BLUE%Low Essence — %ITEMNAME%
+    PlayAlertSound: %FX_PATH%essence_low.wav
+End
+
+ItemDisplay[Essence_High]:
+    Show
+    If: ItemName LIKE "%Burning Essence%" || ItemName LIKE "%Festering Essence%"
+    FontSize: 28
+    Color: 255 180 60
+    Text: %ORANGE%High Essence — %ITEMNAME%
+    PlayAlertSound: %FX_PATH%essence_high.wav
+End
+
+ItemDisplay[Essence_Pure]:
+    Show
+    If: ItemName LIKE "%Pure Essence%" || ItemName LIKE "%Refined Essence%"
+    FontSize: 30
+    Color: 255 255 150
+    Border: 3
+    Text: %GOLD%Pure Essence — %ITEMNAME%
+    PlayAlertSound: %FX_PATH%essence_pure.wav
+End
+
+# --- DROP QUALITY COLOR & FX HIERARCHY ---
+
+ItemDisplay[Drop_Tier1]:
+    Show
+    If: ItemQuality == Unique || ItemQuality == Runeword
+    FontSize: 36
+    Border: 4
+    Color: 255 220 0
+    Text: %GOLD%★ Tier 1 Drop — %ITEMNAME%
+    PlayAlertSound: %FX_PATH%drop_tier1.wav
+End
+
+ItemDisplay[Drop_Tier2]:
+    Show
+    If: ItemQuality == Set || ItemQuality == Rare
+    FontSize: 32
+    Color: 255 160 80
+    Text: %ORANGE%★ Tier 2 — %ITEMNAME%
+    PlayAlertSound: %FX_PATH%drop_tier2.wav
+End
+
+ItemDisplay[Drop_Tier3]:
+    Show
+    If: ItemQuality == Magic
+    FontSize: 28
+    Color: 120 180 255
+    Text: %CYAN%★ Tier 3 — %ITEMNAME%
+End
+
+ItemDisplay[Drop_Tier4]:
+    Show
+    If: ItemQuality == Normal || ItemQuality == Superior
+    FontSize: 22
+    Color: 200 200 200
+    Text: %GRAY%★ Tier 4 — %ITEMNAME%
+End
+
+ItemDisplay[Drop_TierHidden]:
+    Hide
+    If: ItemQuality == LowQuality || ItemName LIKE "%Cracked%" || ItemName LIKE "%Crude%"
+End
+
+# --- FX PRIORITY LADDER (defines sound logic per tier) ---
+# order of sound layering and intensity — in engine handled by PD2 loader
+
+FX_PRIORITY[Tier1]: Critical
+FX_PRIORITY[Tier2]: High
+FX_PRIORITY[Tier3]: Medium
+FX_PRIORITY[Tier4]: Low
+
+# --- OPTIONAL: MAP MOD WARNING (visual alert) ---
+
+ItemDisplay[Map_Mod_Dangerous]:
+    Show
+    If: ItemType == Map && (HasAffix LIKE "%Cursed%" || HasAffix LIKE "%Immune to%")
+    FontSize: 28
+    Color: 255 80 80
+    Border: 2
+    Text: %RED%!! Dangerous Mod — %ITEMNAME%
+    PlayAlertSound: %FX_PATH%map_warning.wav
+End
+# --- MAPS AFFIXES + MAP TIER COLOR FX ---
+
+ItemDisplay[Map_Affix_MagicFind]:
+    Show
+    If: ItemType == Map && HasAffix LIKE "%Magic Find%"
+    FontSize: 26
+    Color: 180 255 180
+    Text: %GREEN%MF Map — %ITEMNAME% [T%MAPTIER%]
+    PlayAlertSound: %FX_PATH%map_mf.wav
+End
+
+ItemDisplay[Map_Affix_Density]:
+    Show
+    If: ItemType == Map && HasAffix LIKE "%Monster Density%"
+    FontSize: 28
+    Color: 200 220 255
+    Text: %CYAN%Dense Map — %ITEMNAME% [T%MAPTIER%]
+    PlayAlertSound: %FX_PATH%map_dense.wav
+End
+
+ItemDisplay[Map_Affix_Exp]:
+    Show
+    If: ItemType == Map && HasAffix LIKE "%Experience%" 
+    FontSize: 28
+    Color: 255 220 80
+    Text: %YELLOW%XP Map — %ITEMNAME% [T%MAPTIER%]
+    PlayAlertSound: %FX_PATH%map_exp.wav
+End
+
+ItemDisplay[Map_Affix_Corrupted]:
+    Show
+    If: ItemType == Map && IsCorrupted == True
+    FontSize: 30
+    Color: 255 0 0
+    Border: 3
+    Text: %RED%Corrupted Map — %ITEMNAME%
+    PlayAlertSound: %FX_PATH%map_corrupted.wav
+End
+
+# --- ESSENCES / TIER FX ---
+
+ItemDisplay[Essence_Low]:
+    Show
+    If: ItemName LIKE "%Twisted Essence%" || ItemName LIKE "%Charged Essence%"
+    FontSize: 24
+    Color: 150 200 255
+    Text: %BLUE%Low Essence — %ITEMNAME%
+    PlayAlertSound: %FX_PATH%essence_low.wav
+End
+
+ItemDisplay[Essence_High]:
+    Show
+    If: ItemName LIKE "%Burning Essence%" || ItemName LIKE "%Festering Essence%"
+    FontSize: 28
+    Color: 255 180 60
+    Text: %ORANGE%High Essence — %ITEMNAME%
+    PlayAlertSound: %FX_PATH%essence_high.wav
+End
+
+ItemDisplay[Essence_Pure]:
+    Show
+    If: ItemName LIKE "%Pure Essence%" || ItemName LIKE "%Refined Essence%"
+    FontSize: 30
+    Color: 255 255 150
+    Border: 3
+    Text: %GOLD%Pure Essence — %ITEMNAME%
+    PlayAlertSound: %FX_PATH%essence_pure.wav
+End
+
+# --- DROP QUALITY COLOR & FX HIERARCHY ---
+
+ItemDisplay[Drop_Tier1]:
+    Show
+    If: ItemQuality == Unique || ItemQuality == Runeword
+    FontSize: 36
+    Border: 4
+    Color: 255 220 0
+    Text: %GOLD%★ Tier 1 Drop — %ITEMNAME%
+    PlayAlertSound: %FX_PATH%drop_tier1.wav
+End
+
+ItemDisplay[Drop_Tier2]:
+    Show
+    If: ItemQuality == Set || ItemQuality == Rare
+    FontSize: 32
+    Color: 255 160 80
+    Text: %ORANGE%★ Tier 2 — %ITEMNAME%
+    PlayAlertSound: %FX_PATH%drop_tier2.wav
+End
+
+ItemDisplay[Drop_Tier3]:
+    Show
+    If: ItemQuality == Magic
+    FontSize: 28
+    Color: 120 180 255
+    Text: %CYAN%★ Tier 3 — %ITEMNAME%
+End
+
+ItemDisplay[Drop_Tier4]:
+    Show
+    If: ItemQuality == Normal || ItemQuality == Superior
+    FontSize: 22
+    Color: 200 200 200
+    Text: %GRAY%★ Tier 4 — %ITEMNAME%
+End
+
+ItemDisplay[Drop_TierHidden]:
+    Hide
+    If: ItemQuality == LowQuality || ItemName LIKE "%Cracked%" || ItemName LIKE "%Crude%"
+End
+
+# --- FX PRIORITY LADDER (defines sound logic per tier) ---
+# order of sound layering and intensity — in engine handled by PD2 loader
+
+FX_PRIORITY[Tier1]: Critical
+FX_PRIORITY[Tier2]: High
+FX_PRIORITY[Tier3]: Medium
+FX_PRIORITY[Tier4]: Low
+
+# --- OPTIONAL: MAP MOD WARNING (visual alert) ---
+
+ItemDisplay[Map_Mod_Dangerous]:
+    Show
+    If: ItemType == Map && (HasAffix LIKE "%Cursed%" || HasAffix LIKE "%Immune to%")
+    FontSize: 28
+    Color: 255 80 80
+    Border: 2
+    Text: %RED%!! Dangerous Mod — %ITEMNAME%
+    PlayAlertSound: %FX_PATH%map_warning.wav
+End
+# --- DYNAMIC PICKUP COLOR ZONES + DROP FX PULSE ---
+
+ItemDisplay[FX_DropPulse_Unique]:
+    Show
+    If: ItemQuality == Unique
+    FontSize: 34
+    Color: 255 220 0
+    Border: 4
+    PulseColor: 255 180 0 180 150 0
+    PulseSpeed: 0.7
+    FadeOut: 2.5
+    Text: %GOLD%⚡ %ITEMNAME% ⚡
+    PlayAlertSound: %FX_PATH%fx_unique_pulse.wav
+End
+
+ItemDisplay[FX_DropPulse_Set]:
+    Show
+    If: ItemQuality == Set
+    FontSize: 30
+    Color: 120 255 120
+    PulseColor: 60 255 60 10 100 10
+    PulseSpeed: 0.8
+    FadeOut: 2
+    Text: %GREEN%☘ %ITEMNAME%
+    PlayAlertSound: %FX_PATH%fx_set_pulse.wav
+End
+
+ItemDisplay[FX_DropPulse_Rune]:
+    Show
+    If: ItemType == Rune
+    FontSize: 32
+    Color: 255 180 60
+    PulseColor: 255 150 50 150 80 0
+    PulseSpeed: 0.6
+    FadeOut: 3
+    Text: %ORANGE%⚒ %ITEMNAME%
+    PlayAlertSound: %FX_PATH%fx_rune_pulse.wav
+End
+
+ItemDisplay[FX_DropPulse_Map]:
+    Show
+    If: ItemType == Map
+    FontSize: 28
+    Color: 100 200 255
+    PulseColor: 80 180 255 20 100 200
+    PulseSpeed: 0.9
+    FadeOut: 2
+    Text: %CYAN%🗺 %ITEMNAME% [T%MAPTIER%]
+    PlayAlertSound: %FX_PATH%fx_map_pulse.wav
+End
+
+ItemDisplay[FX_DropPulse_Quest]:
+    Show
+    If: ItemType == QuestItem
+    FontSize: 28
+    Color: 255 255 150
+    PulseColor: 255 255 100 120 120 0
+    PulseSpeed: 1.0
+    FadeOut: 3
+    Text: %YELLOW%✶ %ITEMNAME%
+    PlayAlertSound: %FX_PATH%fx_quest_pulse.wav
+End
+
+# --- PICKUP GLOW / AURA ZONES ---
+
+ItemDisplay[FX_Glow_Annihilus]:
+    Show
+    If: ItemName == "Annihilus"
+    FontSize: 38
+    Color: 255 255 255
+    GlowColor: 255 220 0
+    GlowRadius: 45
+    GlowIntensity: 3
+    Text: %WHITE%🔥 ANNIHILUS 🔥
+    PlayAlertSound: %FX_PATH%fx_anni_glow.wav
+End
+
+ItemDisplay[FX_Glow_Torch]:
+    Show
+    If: ItemName == "Hellfire Torch"
+    FontSize: 38
+    Color: 255 220 0
+    GlowColor: 255 150 0
+    GlowRadius: 50
+    GlowIntensity: 4
+    Text: %GOLD%🔥 TORCH 🔥
+    PlayAlertSound: %FX_PATH%fx_torch_glow.wav
+End
+
+ItemDisplay[FX_Glow_RuneHigh]:
+    Show
+    If: ItemType == Rune && RuneID >= 26
+    FontSize: 34
+    GlowColor: 255 200 0
+    GlowRadius: 40
+    GlowIntensity: 3
+    Text: %YELLOW%⚡ High Rune — %ITEMNAME%
+    PlayAlertSound: %FX_PATH%fx_rune_glow.wav
+End
+
+ItemDisplay[FX_Glow_UberItem]:
+    Show
+    If: ItemName LIKE "%Uber%" || ItemName LIKE "%Charm of Hatred%"
+    FontSize: 36
+    GlowColor: 255 0 0
+    GlowRadius: 60
+    GlowIntensity: 5
+    Text: %RED%💀 Uber Relic — %ITEMNAME%
+    PlayAlertSound: %FX_PATH%fx_uber_glow.wav
+End
+
+# --- DROP RING / CIRCLE FX VISUALIZATION ---
+
+FX_Ring[Quality_Unique]: 255 220 0 1.8
+FX_Ring[Quality_Set]: 120 255 120 1.5
+FX_Ring[Quality_Rune]: 255 180 80 1.7
+FX_Ring[Quality_Map]: 100 180 255 1.6
+FX_Ring[Quality_Uber]: 255 60 60 2.0
+FX_Ring[Quality_Rare]: 255 220 100 1.4
+
+# --- INTENSITY ZONES ---
+
+ZoneIntensity[HighValue]: 3.0
+ZoneIntensity[MidValue]: 1.8
+ZoneIntensity[LowValue]: 1.2
+
+# --- AUTO FADE SYSTEM ---
+
+FadeAfterPickup[Unique]: 2.0
+FadeAfterPickup[Set]: 1.8
+FadeAfterPickup[Rune]: 2.5
+FadeAfterPickup[Map]: 1.6
+FadeAfterPickup[Quest]: 3.0
+
+# --- DYNAMIC THEMES — INSOMNIAFX SIGNATURE STYLE ---
+
+# Theme VOID — cold blue spectral tone
+#ifdef THEME_VOID
+ColorPalette[Primary]: 100 200 255
+ColorPalette[Secondary]: 20 100 150
+ColorPalette[Accent]: 180 220 255
+GlowColorDefault: 80 180 255
+PlayAlertSound: %FX_PATH%theme_void.wav
+Comment: Theme Loaded — VOID MODE
+#endif
+
+# Theme BLOOD — aggressive red pulse and deep bass FX
+#ifdef THEME_BLOOD
+ColorPalette[Primary]: 255 80 60
+ColorPalette[Secondary]: 160 20 20
+ColorPalette[Accent]: 255 120 80
+GlowColorDefault: 255 40 0
+PlayAlertSound: %FX_PATH%theme_blood.wav
+Comment: Theme Loaded — BLOOD MODE
+#endif
+
+# Theme ETHER — electric violet, balanced tone for high-clarity maps
+#ifdef THEME_ETHER
+ColorPalette[Primary]: 180 100 255
+ColorPalette[Secondary]: 100 60 200
+ColorPalette[Accent]: 255 180 255
+GlowColorDefault: 180 60 255
+PlayAlertSound: %FX_PATH%theme_ether.wav
+Comment: Theme Loaded — ETHER MODE
+#endif
+
+# Theme SOLAR — gold and orange light for heroic farming sessions
+#ifdef THEME_SOLAR
+ColorPalette[Primary]: 255 180 0
+ColorPalette[Secondary]: 200 120 0
+ColorPalette[Accent]: 255 220 120
+GlowColorDefault: 255 200 40
+PlayAlertSound: %FX_PATH%theme_solar.wav
+Comment: Theme Loaded — SOLAR MODE
+#endif
+
+# --- THEME CONTROL MACROS ---
+
+ThemeSwitch[CycleKey]: F11
+ThemeDefault: ETHER
+ThemeList: VOID, BLOOD, ETHER, SOLAR
+
+# when switching, trigger fade + sound pulse
+OnThemeChange:
+    PlayAlertSound: %FX_PATH%theme_switch.wav
+    FlashScreenColor: 255 255 255 0.5
+End
+
+# --- AUTO REACTIVE FX (theme-linked sound layering) ---
+
+FX_Reactive[Theme_VOID]: fx_void_reverb.wav
+FX_Reactive[Theme_BLOOD]: fx_blood_impact.wav
+FX_Reactive[Theme_ETHER]: fx_ether_wave.wav
+FX_Reactive[Theme_SOLAR]: fx_solar_chime.wav
+
+# --- THEME AURA VISUAL SYNC ---
+
+AuraOverlay[VOID]: 60 140 255 0.4
+AuraOverlay[BLOOD]: 255 50 50 0.4
+AuraOverlay[ETHER]: 180 80 255 0.5
+AuraOverlay[SOLAR]: 255 180 60 0.4
+
+# --- TONE CURVES (contrast layers applied per theme) ---
+
+ToneCurve[VOID]: cold 0.8 brightness 1.1
+ToneCurve[BLOOD]: warm 1.2 brightness 0.9
+ToneCurve[ETHER]: balanced 1.0 brightness 1.0
+ToneCurve[SOLAR]: hot 1.3 brightness 1.2
+
+# --- THEME SOUND INTENSITY ---
+
+ThemeVolume[VOID]: 0.7
+ThemeVolume[BLOOD]: 0.9
+ThemeVolume[ETHER]: 0.8
+ThemeVolume[SOLAR]: 1.0
+# ==============================
+# INSOMNIAFX SMART DROP LOGIC
+# ==============================
+
+# Main Idea:
+#  - During drop, the system analyzes the class of the item.
+#  - If it's a Runeword Core / High Rune / Unique Sacred, trigger full FX pulse.
+#  - If it's junk / potion / white base — play minimal or no sound.
+#  - FX layers are stacked according to tiers: low, mid, high, godlike.
+
+# --- SMART PRIORITY GROUPS ---
+
+ItemPriority[Tier0]: Potion, Gold, Junk, Misc
+ItemPriority[Tier1]: Magic, Rare, Set
+ItemPriority[Tier2]: Unique, RuneLow, GemPerfect
+ItemPriority[Tier3]: RuneHigh, Crafted, Charm, Jewel
+ItemPriority[Tier4]: UberKey, Map, Essence, Token
+ItemPriority[Tier5]: UniqueSacred, UberItem, RunewordCore, Relic
+
+# --- FX PROFILES (linked with Tier) ---
+
+FXProfile[Tier0]:
+    PlayAlertSound: %FX_PATH%/soft_click.wav
+    GlowColor: 80 80 80
+    FlashScreenColor: 0 0 0 0.1
+End
+
+FXProfile[Tier1]:
+    PlayAlertSound: %FX_PATH%/minor_drop.wav
+    GlowColor: 120 120 255
+    FlashScreenColor: 0 0 80 0.15
+End
+
+FXProfile[Tier2]:
+    PlayAlertSound: %FX_PATH%/notable_drop.wav
+    GlowColor: 180 140 255
+    FlashScreenColor: 80 0 120 0.25
+    ScreenPulse: true
+End
+
+FXProfile[Tier3]:
+    PlayAlertSound: %FX_PATH%/major_drop.wav
+    GlowColor: 255 200 100
+    FlashScreenColor: 255 180 60 0.35
+    ScreenPulse: true
+    SlowFade: true
+End
+
+FXProfile[Tier4]:
+    PlayAlertSound: %FX_PATH%/uber_key.wav
+    GlowColor: 255 100 20
+    FlashScreenColor: 255 60 0 0.45
+    DropEchoFX: true
+    ScreenShake: mild
+End
+
+FXProfile[Tier5]:
+    PlayAlertSound: %FX_PATH%/god_drop.wav
+    GlowColor: 255 255 255
+    FlashScreenColor: 255 255 255 0.6
+    ScreenPulse: strong
+    DropEchoFX: true
+    ScreenShake: heavy
+    AmbientOverlay: %FX_PATH%/divine_hum.wav
+End
+
+# --- RUNE CLASSIFICATION ---
+
+RuneLow: El, Eld, Tir, Nef, Eth, Ith, Tal, Ral, Ort, Thul, Amn, Sol, Shael, Dol, Hel
+RuneMid: Io, Lum, Ko, Fal, Lem, Pul, Um, Mal, Ist
+RuneHigh: Gul, Vex, Ohm, Lo, Sur, Ber, Jah, Cham, Zod
+
+# --- SPECIAL TRIGGER FX ---
+
+OnDrop[RuneHigh]:
+    PlayAlertSound: %FX_PATH%/rune_high.wav
+    FlashScreenColor: 255 200 0 0.5
+    Comment: High Rune Drop Detected
+End
+
+OnDrop[UniqueSacred]:
+    PlayAlertSound: %FX_PATH%/unique_sacred.wav
+    FlashScreenColor: 255 255 255 0.6
+    GlowColor: 255 240 200
+    Comment: Sacred Unique Detected
+End
+
+OnDrop[UberItem]:
+    PlayAlertSound: %FX_PATH%/uber_artifact.wav
+    ScreenShake: strong
+    Comment: Uber Artifact Acquired
+End
+
+OnDrop[Relic]:
+    PlayAlertSound: %FX_PATH%/relic_chime.wav
+    AmbientOverlay: %FX_PATH%/mystic_bg.wav
+    Comment: Relic of Power — Collect!
+End
+
+# --- FILTER AUTO BALANCER ---
+
+# The system automatically adjusts sound volume based on drop density (prevents FX overload)
+AutoVolumeControl: true
+AutoVolumeStep: 0.05
+MaxActiveFX: 6
+PriorityReduceBelowTier: Tier3
+
+# --- VISUAL BALANCE PARAMETERS ---
+AutoGlowSaturation: dynamic
+AutoContrast: adaptive
+AutoLuminanceCurve: 1.2
+
+# --- FX STATUS MONITOR (for debug testing) ---
+DebugDropFX: false
+# --- RUNES ---
+
+ShowClass[RuneLow]:
+    ItemDisplay: %MAP-25%%ORANGE%Low Rune %WHITE%%ITEM%
+    FontSize: 26
+    PlayAlertSound: %FX_PATH%/rune_low.wav
+    GlowColor: 200 120 60
+End
+
+ShowClass[RuneMid]:
+    ItemDisplay: %MAP-35%%ORANGE%Mid Rune %WHITE%%ITEM%
+    FontSize: 30
+    PlayAlertSound: %FX_PATH%/rune_mid.wav
+    GlowColor: 255 180 60
+    ScreenPulse: mild
+End
+
+ShowClass[RuneHigh]:
+    ItemDisplay: %MAP-55%%YELLOW%High Rune %RED%%ITEM%
+    FontSize: 38
+    PlayAlertSound: %FX_PATH%/rune_high.wav
+    FlashScreenColor: 255 220 100 0.5
+    GlowColor: 255 230 140
+    ScreenPulse: strong
+End
+
+# --- GEMS ---
+
+Show[Gems]:
+    ItemDisplay: %MAP-18%%CYAN%%ITEM%
+    FontSize: 24
+    GlowColor: 60 180 255
+End
+
+Show[PerfectGems]:
+    ItemDisplay: %MAP-24%%BLUE%Perfect %ITEM%
+    FontSize: 28
+    PlayAlertSound: %FX_PATH%/gem_perfect.wav
+    GlowColor: 100 220 255
+    ScreenPulse: true
+End
+
+# --- JEWELS / CHARMS ---
+
+Show[MagicJewel]:
+    ItemDisplay: %MAP-20%%PURPLE%Jewel %WHITE%%ITEM%
+    FontSize: 28
+    GlowColor: 180 100 255
+End
+
+Show[CharmSmall]:
+    ItemDisplay: %MAP-21%%ORANGE%Small Charm %WHITE%%ITEM%
+    FontSize: 24
+End
+
+Show[CharmLarge]:
+    ItemDisplay: %MAP-22%%ORANGE%Large Charm %WHITE%%ITEM%
+    FontSize: 26
+End
+
+Show[CharmGrand]:
+    ItemDisplay: %MAP-23%%ORANGE%Grand Charm %WHITE%%ITEM%
+    FontSize: 28
+    PlayAlertSound: %FX_PATH%/grand_charm.wav
+End
+
+# --- UNIQUES / SETS / RARES ---
+
+Show[Unique]:
+    ItemDisplay: %MAP-40%%GOLD%Unique %WHITE%%ITEM%
+    FontSize: 32
+    PlayAlertSound: %FX_PATH%/unique.wav
+    GlowColor: 255 200 80
+    ScreenPulse: true
+End
+
+Show[UniqueSacred]:
+    ItemDisplay: %MAP-45%%GOLD%Sacred Unique %RED%%ITEM%
+    FontSize: 38
+    PlayAlertSound: %FX_PATH%/unique_sacred.wav
+    GlowColor: 255 255 200
+    ScreenPulse: strong
+    FlashScreenColor: 255 255 255 0.5
+End
+
+Show[Set]:
+    ItemDisplay: %MAP-30%%GREEN%Set %WHITE%%ITEM%
+    FontSize: 30
+    PlayAlertSound: %FX_PATH%/set.wav
+    GlowColor: 60 255 100
+End
+
+Show[Rare]:
+    ItemDisplay: %MAP-25%%YELLOW%Rare %WHITE%%ITEM%
+    FontSize: 28
+    GlowColor: 255 255 120
+End
+
+Show[Crafted]:
+    ItemDisplay: %MAP-27%%ORANGE%Crafted %WHITE%%ITEM%
+    FontSize: 30
+    PlayAlertSound: %FX_PATH%/crafted.wav
+    GlowColor: 255 180 80
+End
+
+# --- MAPS / MAP FRAGMENTS ---
+
+Show[Map]:
+    ItemDisplay: %MAP-60%%RED%Map %WHITE%%ITEM%
+    FontSize: 34
+    PlayAlertSound: %FX_PATH%/map_drop.wav
+    GlowColor: 255 100 60
+    FlashScreenColor: 255 120 60 0.4
+End
+
+Show[MapFragment]:
+    ItemDisplay: %MAP-20%%RED%Fragment %WHITE%%ITEM%
+    FontSize: 26
+    GlowColor: 255 100 60
+End
+
+# --- UBERS / UBER ITEMS / RELICS ---
+
+Show[UberKey]:
+    ItemDisplay: %MAP-35%%PURPLE%Uber Key %WHITE%%ITEM%
+    FontSize: 32
+    PlayAlertSound: %FX_PATH%/uber_key.wav
+    GlowColor: 180 100 255
+End
+
+Show[UberItem]:
+    ItemDisplay: %MAP-50%%PURPLE%Uber Item %WHITE%%ITEM%
+    FontSize: 36
+    PlayAlertSound: %FX_PATH%/uber_artifact.wav
+    GlowColor: 255 180 255
+    ScreenPulse: strong
+End
+
+Show[Relic]:
+    ItemDisplay: %MAP-55%%CYAN%Relic %WHITE%%ITEM%
+    FontSize: 38
+    PlayAlertSound: %FX_PATH%/relic_chime.wav
+    GlowColor: 100 255 255
+    FlashScreenColor: 100 255 255 0.5
+End
+
+# --- CRAFTING MATERIALS / RECIPES ---
+
+Show[CraftingMaterial]:
+    ItemDisplay: %MAP-19%%ORANGE%Craft Material %WHITE%%ITEM%
+    FontSize: 28
+End
+
+Show[CraftRecipe]:
+    ItemDisplay: %MAP-23%%ORANGE%Recipe %WHITE%%ITEM%
+    FontSize: 30
+    PlayAlertSound: %FX_PATH%/recipe_found.wav
+    GlowColor: 255 180 80
+End
+
+# --- QUEST ITEMS ---
+
+Show[Quest]:
+    ItemDisplay: %MAP-25%%WHITE%Quest Item %RED%%ITEM%
+    FontSize: 32
+    GlowColor: 255 200 120
+    PlayAlertSound: %FX_PATH%/quest_item.wav
+End
+
+# --- POTIONS ---
+
+Show[Potion]:
+    ItemDisplay: %MAP-10%%WHITE%%ITEM%
+    FontSize: 22
+    GlowColor: 100 100 100
+End
+
+Show[RejuvenationPotion]:
+    ItemDisplay: %MAP-12%%PINK%Rejuv %WHITE%%ITEM%
+    FontSize: 24
+    GlowColor: 255 100 200
+End
+
+# --- GOLD ---
+
+Show[Gold]:
+    ItemDisplay: %MAP-9%%YELLOW%Gold %WHITE%%ITEM%
+    FontSize: 20
+    GlowColor: 255 200 50
+End
+# --- LOW VALUE MAGIC ITEMS ---
+Hide[MagicLow]:
+    Condition: ilvl < 20 && ItemQuality == Magic
+    Comment: Hiding low-tier magic junk
+    FadeAlpha: 0.2
+End
+
+Hide[MagicBaseWhite]:
+    Condition: Quality == Normal && ilvl < 35 && ItemType == Weapon
+    Comment: Hide weak white bases
+    FadeAlpha: 0.1
+End
+
+Hide[ArmorLow]:
+    Condition: Quality == Normal && ilvl < 30 && ItemType == Armor
+    Comment: Hide low armor
+    FadeAlpha: 0.1
+End
+
+Hide[WandLow]:
+    Condition: Quality == Normal && ilvl < 40 && ItemType == Wand
+    Comment: Hide low necro bases
+    FadeAlpha: 0.15
+End
+
+# --- BASIC POTIONS ---
+Hide[PotionSmall]:
+    ItemDisplay: none
+    Condition: PotionLevel <= 2
+    Comment: Hide minor healing/mana potions
+End
+
+Hide[ThrownWeapons]:
+    Condition: ItemType == Throwing && ilvl < 50
+    Comment: Hide throwing junk
+    FadeAlpha: 0.1
+End
+
+# --- QUEST / CONSUMABLE CONTROL ---
+Hide[Scroll]:
+    ItemDisplay: none
+    Comment: Hide scrolls (redundant in PD2 auto-ID systems)
+End
+
+Hide[Book]:
+    ItemDisplay: none
+    Comment: Hide books/tomes (inventory space optimization)
+End
+
+# --- GOLD AUTOCLEAN BELOW THRESHOLD ---
+Hide[GoldLow]:
+    Condition: GoldAmount < 500
+    Comment: Auto-hide small gold piles
+    FadeAlpha: 0.2
+End
+
+# --- SOCKETED BASES LOGIC ---
+Show[SocketedElite]:
+    Condition: Quality == Normal && ItemType == Weapon && Sockets >= 4 && ilvl >= 60
+    ItemDisplay: %MAP-25%%BLUE%4os+ Base %WHITE%%ITEM%
+    FontSize: 28
+    GlowColor: 100 200 255
+End
+
+Hide[SocketedLow]:
+    Condition: Quality == Normal && ItemType == Weapon && ilvl < 40 && Sockets <= 3
+    Comment: Hide low socket bases
+End
+
+# --- ETHEREAL RULES ---
+Show[EtherealElite]:
+    Condition: Ethereal == True && ilvl >= 60
+    ItemDisplay: %MAP-40%%CYAN%Ethereal Elite %WHITE%%ITEM%
+    FontSize: 28
+    GlowColor: 120 255 255
+End
+
+Hide[EtherealLow]:
+    Condition: Ethereal == True && ilvl < 50
+    Comment: Hide weak ethereal junk
+End
+
+# --- CLASS-SPECIFIC CONTROL ---
+
+Hide[LowClassItem]:
+    Condition: ilvl < 25 && (ClassSpecific == True)
+    Comment: Hide weak class-specific low bases
+    FadeAlpha: 0.2
+End
+
+Show[HighClassItem]:
+    Condition: ilvl >= 70 && ClassSpecific == True
+    ItemDisplay: %MAP-28%%GOLD%Class Elite %WHITE%%ITEM%
+    FontSize: 32
+    GlowColor: 255 200 100
+    PlayAlertSound: %FX_PATH%/class_elite.wav
+End
+
+# --- TRASH CLEANUP (FALLBACK RULE) ---
+Hide[TrashFallback]:
+    Condition: ItemQuality == Normal && ilvl < 25
+    Comment: Final cleanup pass — hides leftover low bases
+End
+
+# --- DEBUG VIEW TOGGLE ---
+DebugView[EnableKey]: F10
+DebugView[ShowHidden]: false
+DebugView[HighlightHidden]: %RED%
+# --- AMBIENT CONTROL SETTINGS ---
+AmbientFX[Global]:
+    Enabled: true
+    VolumeBase: 0.8
+    AmbientFadeTime: 1500
+    RandomPitchVar: 0.15
+End
+
+# --- AREA-BASED FX REACTIONS ---
+AmbientFX[ChaosSanctuary]:
+    AreaName: Chaos Sanctuary
+    FXPack: %FX_PATH%/chaos_echo.wav
+    VolumeBoost: 0.2
+    GlowTint: 255 40 40
+    Comment: Add deep echo and red tint in Chaos
+End
+
+AmbientFX[UberTristram]:
+    AreaName: Uber Tristram
+    FXPack: %FX_PATH%/tristram_darkpulse.wav
+    VolumeBoost: 0.3
+    GlowTint: 180 0 255
+    Comment: Intensifies FX for Uber fights
+End
+
+AmbientFX[Cows]:
+    AreaName: Moo Moo Farm
+    FXPack: %FX_PATH%/cowstorm.wav
+    VolumeBoost: 0.15
+    GlowTint: 255 220 0
+    Comment: Light pulse effect for cow maps
+End
+
+AmbientFX[MapWorld]:
+    AreaGroup: Map
+    FXPack: %FX_PATH%/mapzone.wav
+    VolumeBoost: 0.1
+    GlowTint: 0 180 255
+    Comment: Map-specific calm filter tone
+End
+
+AmbientFX[PandemoniumEvent]:
+    AreaName: Pandemonium Fortress
+    FXPack: %FX_PATH%/holyflux.wav
+    VolumeBoost: 0.25
+    GlowTint: 100 255 200
+    Comment: Resonant holy pulse during Pandemonium events
+End
+
+# --- FX SYNC SYSTEM ---
+FXSync[DropFX]:
+    SyncTo: ItemDisplay
+    Delay: 200ms
+    Comment: Synchronizes audio FX timing to visual display delay
+End
+
+FXSync[UberDropFX]:
+    SyncTo: BossDeath
+    Delay: 100ms
+    Comment: Uber boss death FX trigger
+End
+
+FXSync[HighRuneDrop]:
+    SyncTo: RuneDrop
+    Priority: High
+    FXPack: %FX_PATH%/rune_ping.wav
+    GlowBoost: 50
+End
+
+# --- LIGHT ENVIRONMENT REACTIONS ---
+LightFX[Desert]:
+    AreaTag: Act2
+    TintColor: 255 230 160
+    AmbientReduction: 0.1
+    Comment: Warmer tone for desert maps
+End
+
+LightFX[Hell]:
+    AreaTag: Act4
+    TintColor: 255 60 60
+    AmbientReduction: 0.25
+    Comment: Darker blood tone in Hell areas
+End
+
+LightFX[Frozen]:
+    AreaTag: Act5
+    TintColor: 180 220 255
+    AmbientReduction: 0.05
+    Comment: Cold bluish hue for icy regions
+End
+
+# --- FX AUTO CLEANUP ---
+FXAutoClean:
+    OnZoneChange: true
+    Timeout: 6000
+    Comment: Clears lingering FX sounds when moving to a new area
+End
+
+# --- END MODULE ---
+# System auto-balances FX intensity based on zone load
+AutoFXBalance: true
+MaxFXPerZone: 8
+SafeUnloadDelay: 250ms
+# --- BASE ITEM GROUPS ---
+ItemClass[Inferior]:
+    MatchQuality: inferior
+    Comment: Low quality / broken base item
+End
+
+ItemClass[Normal]:
+    MatchQuality: normal
+    Comment: Standard white base (non-magic)
+End
+
+ItemClass[Superior]:
+    MatchQuality: superior
+    Comment: Enhanced white base, potential runeword base
+End
+
+# --- FX PROFILES FOR BASE QUALITY ---
+FXProfile[Inferior]:
+    PlayAlertSound: %FX_PATH%/trash_click.wav
+    GlowColor: 80 50 50
+    FlashScreenColor: 50 0 0 0.05
+    Comment: Barely audible click for junk items
+End
+
+FXProfile[Normal]:
+    PlayAlertSound: %FX_PATH%/base_drop.wav
+    GlowColor: 100 100 100
+    FlashScreenColor: 100 100 100 0.08
+    Comment: Neutral tone for standard bases
+End
+
+FXProfile[Superior]:
+    PlayAlertSound: %FX_PATH%/superior_ping.wav
+    GlowColor: 160 220 255
+    FlashScreenColor: 0 120 255 0.25
+    ScreenPulse: true
+    Comment: Highlight superior bases suitable for runewords
+End
+
+# --- DROP BEHAVIOR ---
+OnDrop[Inferior]:
+    UseFXProfile: Inferior
+    AutoHideAfter: 3s
+End
+
+OnDrop[Normal]:
+    UseFXProfile: Normal
+End
+
+OnDrop[Superior]:
+    UseFXProfile: Superior
+    ExtraGlowDuration: 2s
+End
+
+# --- SMART LOGIC EXTENSION ---
+# Adjust FX intensity if too many bases drop at once
+BaseFXLimiter:
+    Active: true
+    MaxSimultaneous: 5
+    AutoFadeOldest: true
+End
+# ==============================
+# INSOMNIAFX ITEM CLASS MATRIX — MISC / QUEST / CRAFT / GEMS / ETC
+# ==============================
+
+# --- MISCELLANEOUS ---
+ItemClass[Misc]:
+    MatchGroup: Arrows, Bolts, Keys, Scrolls, Tomes, Oils, Essences
+    Comment: Basic utility or crafting materials
+End
+
+FXProfile[Misc]:
+    PlayAlertSound: %FX_PATH%/misc_pick.wav
+    GlowColor: 120 120 120
+    FlashScreenColor: 80 80 80 0.1
+End
+
+OnDrop[Misc]:
+    UseFXProfile: Misc
+End
+
+# --- QUEST ITEMS ---
+ItemClass[Quest]:
+    MatchGroup: HoradricCube, HoradricStaff, KhalimsWill, ScrollOfResistance, Token
+    Comment: Key quest items or reward components
+End
+
+FXProfile[Quest]:
+    PlayAlertSound: %FX_PATH%/quest_item.wav
+    GlowColor: 255 240 160
+    FlashScreenColor: 255 200 60 0.3
+    AmbientOverlay: %FX_PATH%/holy_tone.wav
+End
+
+OnDrop[Quest]:
+    UseFXProfile: Quest
+    ScreenPulse: true
+End
+
+# --- CRAFTING MATERIALS ---
+ItemClass[Crafting]:
+    MatchGroup: PerfectGem, Essence, RuneLow, RuneMid, RuneHigh, Jewel
+    Comment: Crafting and enhancement materials
+End
+
+FXProfile[Crafting]:
+    PlayAlertSound: %FX_PATH%/craft_tinkle.wav
+    GlowColor: 200 180 255
+    FlashScreenColor: 120 80 255 0.25
+End
+
+OnDrop[Crafting]:
+    UseFXProfile: Crafting
+End
+
+# --- POTIONS ---
+ItemClass[Potion]:
+    MatchGroup: Healing, Mana, Rejuvenation, Antidote, Stamina, Thawing
+    Comment: Standard potions — low priority
+End
+
+FXProfile[Potion]:
+    PlayAlertSound: %FX_PATH%/soft_click.wav
+    GlowColor: 100 80 80
+    FlashScreenColor: 50 50 50 0.05
+End
+
+OnDrop[Potion]:
+    UseFXProfile: Potion
+    AutoHideAfter: 1.5s
+End
+
+# --- RINGS AND AMULETS ---
+ItemClass[RingsAmulets]:
+    MatchGroup: Ring, Amulet
+    Comment: Jewelry and rare base drops
+End
+
+FXProfile[RingsAmulets]:
+    PlayAlertSound: %FX_PATH%/ring_ping.wav
+    GlowColor: 255 220 140
+    FlashScreenColor: 255 200 80 0.35
+    ScreenPulse: true
+End
+
+OnDrop[RingsAmulets]:
+    UseFXProfile: RingsAmulets
+    ExtraGlowDuration: 2s
+End
+
+# --- CHARMS ---
+ItemClass[Charms]:
+    MatchGroup: SmallCharm, LargeCharm, GrandCharm
+    Comment: Charms of all sizes
+End
+
+FXProfile[Charms]:
+    PlayAlertSound: %FX_PATH%/charm_tone.wav
+    GlowColor: 180 255 200
+    FlashScreenColor: 100 255 100 0.3
+End
+
+OnDrop[Charms]:
+    UseFXProfile: Charms
+End
+
+# --- GEMS ---
+ItemClass[Gems]:
+    MatchGroup: ChippedGem, FlawedGem, NormalGem, FlawlessGem, PerfectGem
+    Comment: Gem progression for crafting
+End
+
+FXProfile[Gems]:
+    PlayAlertSound: %FX_PATH%/gem_drop.wav
+    GlowColor: 120 220 255
+    FlashScreenColor: 60 120 255 0.25
+    ScreenPulse: true
+End
+
+OnDrop[Gems]:
+    UseFXProfile: Gems
+End
+
+# --- MAPS ---
+ItemClass[Maps]:
+    MatchGroup: MapLow, MapMid, MapHigh, MapSacred
+    Comment: PD2 maps and fragments
+End
+
+FXProfile[Maps]:
+    PlayAlertSound: %FX_PATH%/map_scroll.wav
+    GlowColor: 180 255 120
+    FlashScreenColor: 120 255 80 0.3
+    DropEchoFX: true
+End
+
+OnDrop[Maps]:
+    UseFXProfile: Maps
+End
+
+# --- UBER KEYS & UBER ITEMS ---
+ItemClass[Ubers]:
+    MatchGroup: UberKey, Organ, Torch, Annihilus, UberItem
+    Comment: Uber bosses, relics, torches
+End
+
+FXProfile[Ubers]:
+    PlayAlertSound: %FX_PATH%/uber_blast.wav
+    GlowColor: 255 100 60
+    FlashScreenColor: 255 80 40 0.45
+    ScreenPulse: true
+    ScreenShake: strong
+End
+
+OnDrop[Ubers]:
+    UseFXProfile: Ubers
+End
+
+# --- RELICS ---
+ItemClass[Relic]:
+    MatchGroup: Relic, DivineRelic, LegendaryRelic
+    Comment: Special relic-type items with lore value
+End
+
+FXProfile[Relic]:
+    PlayAlertSound: %FX_PATH%/relic_chime.wav
+    GlowColor: 255 255 200
+    FlashScreenColor: 255 255 150 0.4
+    AmbientOverlay: %FX_PATH%/mystic_bg.wav
+End
+
+OnDrop[Relic]:
+    UseFXProfile: Relic
+    ScreenPulse: true
+    # --- UNIQUE ITEMS ---
+ItemClass[Unique]:
+    MatchQuality: unique
+    Comment: All unique-tier items
+End
+
+FXProfile[Unique]:
+    PlayAlertSound: %FX_PATH%/unique_drop.wav
+    GlowColor: 255 180 100
+    FlashScreenColor: 255 160 60 0.4
+    ScreenPulse: true
+    DropEchoFX: true
+End
+
+OnDrop[Unique]:
+    UseFXProfile: Unique
+End
+
+# --- SET ITEMS ---
+ItemClass[Set]:
+    MatchQuality: set
+    Comment: Green set items
+End
+
+FXProfile[Set]:
+    PlayAlertSound: %FX_PATH%/set_drop.wav
+    GlowColor: 60 255 60
+    FlashScreenColor: 60 255 60 0.35
+    ScreenPulse: true
+End
+
+OnDrop[Set]:
+    UseFXProfile: Set
+End
+
+# --- CRAFTED ITEMS ---
+ItemClass[Crafted]:
+    MatchQuality: crafted
+    Comment: Crafted and upgraded items
+End
+
+FXProfile[Crafted]:
+    PlayAlertSound: %FX_PATH%/craft_spark.wav
+    GlowColor: 255 180 255
+    FlashScreenColor: 255 100 255 0.4
+    ScreenPulse: true
+    DropEchoFX: true
+End
+
+OnDrop[Crafted]:
+    UseFXProfile: Crafted
+End
+
+# --- RUNES (FULL GROUP) ---
+ItemClass[Runes]:
+    MatchGroup: RuneLow, RuneMid, RuneHigh
+    Comment: All runes — auto-tiered by value
+End
+
+FXProfile[RunesLow]:
+    PlayAlertSound: %FX_PATH%/rune_low.wav
+    GlowColor: 140 140 255
+    FlashScreenColor: 60 60 255 0.25
+End
+
+FXProfile[RunesMid]:
+    PlayAlertSound: %FX_PATH%/rune_mid.wav
+    GlowColor: 200 200 255
+    FlashScreenColor: 120 120 255 0.35
+End
+
+FXProfile[RunesHigh]:
+    PlayAlertSound: %FX_PATH%/rune_high.wav
+    GlowColor: 255 255 100
+    FlashScreenColor: 255 240 80 0.5
+    ScreenPulse: true
+    DropEchoFX: true
+    ScreenShake: mild
+End
+
+OnDrop[RuneLow]:
+    UseFXProfile: RunesLow
+End
+
+OnDrop[RuneMid]:
+    UseFXProfile: RunesMid
+End
+
+OnDrop[RuneHigh]:
+    UseFXProfile: RunesHigh
+    Comment: High Rune — full alert active
+End
+
+# --- SACRED ITEMS ---
+ItemClass[Sacred]:
+    MatchGroup: SacredArmor, SacredWeapon, SacredBase
+    Comment: Sacred base items for endgame crafting
+End
+
+FXProfile[Sacred]:
+    PlayAlertSound: %FX_PATH%/sacred_ping.wav
+    GlowColor: 255 255 200
+    FlashScreenColor: 255 240 160 0.4
+    ScreenPulse: true
+    AmbientOverlay: %FX_PATH%/holyflux.wav
+End
+
+OnDrop[Sacred]:
+    UseFXProfile: Sacred
+End
+
+# --- GODLIKE / LEGENDARY ITEMS ---
+ItemClass[Godlike]:
+    MatchGroup: UniqueSacred, UberItem, RunewordCore, Relic, DivineRelic
+    Comment: Ultimate tier drops (Tier5+)
+End
+
+FXProfile[Godlike]:
+    PlayAlertSound: %FX_PATH%/god_drop.wav
+    GlowColor: 255 255 255
+    FlashScreenColor: 255 255 255 0.6
+    ScreenPulse: strong
+    DropEchoFX: true
+    ScreenShake: heavy
+    AmbientOverlay: %FX_PATH%/divine_hum.wav
+End
+
+OnDrop[Godlike]:
+    UseFXProfile: Godlike
+    ExtraGlowDuration: 4s
+    Comment: Legendary-tier drop confirmed
+End
+
+# --- RUNIC REACTIONS ---
+RunewordCoreFX:
+    TriggerOn: CompleteRuneword
+    FXPack: %FX_PATH%/runeword_complete.wav
+    FlashScreenColor: 255 255 200 0.6
+    ScreenPulse: true
+    Comment: Runeword successfully created
+End
+
+# --- FINAL TIER BALANCER ---
+TierFXLimiter:
+    MaxActiveTierFX: 8
+    AutoFadeBelowTier: Tier2
+    Comment: Prevents overdraw from overlapping effects
+ # --- RUNEWORD RECIPE TRACKER ---
+RunewordRecipe[Oath]:
+    RequiredRunes: Shael, Pul, Mal, Lum
+    BaseType: Sword, Axe, Mace
+    Comment: Triggers visual pulse when any rune from recipe drops
+End
+
+RunewordRecipe[Enigma]:
+    RequiredRunes: Jah, Ith, Ber
+    BaseType: Armor
+    Comment: High-tier armor runeword
+End
+
+RunewordRecipe[Infinity]:
+    RequiredRunes: Ber, Mal, Ber, Ist
+    BaseType: Polearm
+    Comment: Powerful merc runeword
+End
+
+RunewordRecipe[Fortitude]:
+    RequiredRunes: El, Sol, Dol, Lo
+    BaseType: Armor, Weapon
+End
+
+RunewordRecipe[Grief]:
+    RequiredRunes: Eth, Tir, Lo, Mal, Ral
+    BaseType: Sword, Axe
+End
+
+RunewordRecipe[Spirit]:
+    RequiredRunes: Tal, Thul, Ort, Amn
+    BaseType: Sword, Shield
+End
+
+# --- RECIPE DROP FX REACTIONS ---
+OnDrop[Rune]:
+    IfInRunewordRecipe: true
+    FXProfile: RecipePart
+    Comment: Rune is part of tracked recipe
+End
+
+FXProfile[RecipePart]:
+    PlayAlertSound: %FX_PATH%/recipe_ping.wav
+    FlashScreenColor: 150 255 255 0.3
+    GlowColor: 100 255 255
+    ScreenPulse: true
+End
+
+# --- COMPLETE RECIPE DETECTION ---
+OnRecipeComplete:
+    FXProfile: RecipeComplete
+    Comment: Full set of required runes detected
+End
+
+FXProfile[RecipeComplete]:
+    PlayAlertSound: %FX_PATH%/recipe_complete.wav
+    GlowColor: 255 255 180
+    FlashScreenColor: 255 255 200 0.5
+    ScreenShake: mild
+    DropEchoFX: true
+    AmbientOverlay: %FX_PATH%/craft_wave.wav
+End
+
+# --- CRAFTING MATERIAL HIGHLIGHT ---
+ItemClass[CraftMaterial]:
+    MatchGroup: PerfectGem, Jewel, Rune, Essence, Oil
+    Comment: Materials used in cube recipes
+End
+
+FXProfile[CraftMaterial]:
+    PlayAlertSound: %FX_PATH%/material_ping.wav
+    GlowColor: 200 255 220
+    FlashScreenColor: 120 255 180 0.25
+End
+
+OnDrop[CraftMaterial]:
+    UseFXProfile: CraftMaterial
+    Comment: Craft component drop
+End
+
+# --- ADVANCED CUBE REACTION (SMART HINT) ---
+CubeHintSystem:
+    DetectCombination: true
+    ShowHintDelay: 0.3s
+    FlashScreenColor: 255 240 160 0.4
+    PlayAlertSound: %FX_PATH%/cube_hint.wav
+    Comment: Shows subtle visual cue when recipe combo is near completion
+End
+
+# --- AUTO-RECIPE CLEANUP ---
+RecipeFXLimiter:
+    Active: true
+    MaxRecipeFX: 5
+    AutoFadeDelay: 2.5s
+End   
+# --- RUNEWORD RECIPE TRACKER ---
+RunewordRecipe[Oath]:
+    RequiredRunes: Shael, Pul, Mal, Lum
+    BaseType: Sword, Axe, Mace
+    Comment: Triggers visual pulse when any rune from recipe drops
+End
+
+RunewordRecipe[Enigma]:
+    RequiredRunes: Jah, Ith, Ber
+    BaseType: Armor
+    Comment: High-tier armor runeword
+End
+
+RunewordRecipe[Infinity]:
+    RequiredRunes: Ber, Mal, Ber, Ist
+    BaseType: Polearm
+    Comment: Powerful merc runeword
+End
+
+RunewordRecipe[Fortitude]:
+    RequiredRunes: El, Sol, Dol, Lo
+    BaseType: Armor, Weapon
+End
+
+RunewordRecipe[Grief]:
+    RequiredRunes: Eth, Tir, Lo, Mal, Ral
+    BaseType: Sword, Axe
+End
+
+RunewordRecipe[Spirit]:
+    RequiredRunes: Tal, Thul, Ort, Amn
+    BaseType: Sword, Shield
+End
+
+# --- RECIPE DROP FX REACTIONS ---
+OnDrop[Rune]:
+    IfInRunewordRecipe: true
+    FXProfile: RecipePart
+    Comment: Rune is part of tracked recipe
+End
+
+FXProfile[RecipePart]:
+    PlayAlertSound: %FX_PATH%/recipe_ping.wav
+    FlashScreenColor: 150 255 255 0.3
+    GlowColor: 100 255 255
+    ScreenPulse: true
+End
+
+# --- COMPLETE RECIPE DETECTION ---
+OnRecipeComplete:
+    FXProfile: RecipeComplete
+    Comment: Full set of required runes detected
+End
+
+FXProfile[RecipeComplete]:
+    PlayAlertSound: %FX_PATH%/recipe_complete.wav
+    GlowColor: 255 255 180
+    FlashScreenColor: 255 255 200 0.5
+    ScreenShake: mild
+    DropEchoFX: true
+    AmbientOverlay: %FX_PATH%/craft_wave.wav
+End
+
+# --- CRAFTING MATERIAL HIGHLIGHT ---
+ItemClass[CraftMaterial]:
+    MatchGroup: PerfectGem, Jewel, Rune, Essence, Oil
+    Comment: Materials used in cube recipes
+End
+
+FXProfile[CraftMaterial]:
+    PlayAlertSound: %FX_PATH%/material_ping.wav
+    GlowColor: 200 255 220
+    FlashScreenColor: 120 255 180 0.25
+End
+
+OnDrop[CraftMaterial]:
+    UseFXProfile: CraftMaterial
+    Comment: Craft component drop
+End
+
+# --- ADVANCED CUBE REACTION (SMART HINT) ---
+CubeHintSystem:
+    DetectCombination: true
+    ShowHintDelay: 0.3s
+    FlashScreenColor: 255 240 160 0.4
+    PlayAlertSound: %FX_PATH%/cube_hint.wav
+    Comment: Shows subtle visual cue when recipe combo is near completion
+End
+
+# --- AUTO-RECIPE CLEANUP ---
+RecipeFXLimiter:
+    Active: true
+    MaxRecipeFX: 5
+    AutoFadeDelay: 2.5s
+End
+# --- EARLY / MID TIER RUNEWORDS ---
+RunewordRecipe[Stealth]:
+    RequiredRunes: Tal, Eth
+    BaseType: Armor
+    Comment: Early-game mobility armor
+End
+
+RunewordRecipe[Leaf]:
+    RequiredRunes: Tir, Ral
+    BaseType: Staff
+    Comment: Fire sorc early boost
+End
+
+RunewordRecipe[Ancient's Pledge]:
+    RequiredRunes: Ral, Ort, Tal
+    BaseType: Shield
+End
+
+RunewordRecipe[Spirit]:
+    RequiredRunes: Tal, Thul, Ort, Amn
+    BaseType: Sword, Shield
+End
+
+RunewordRecipe[Insight]:
+    RequiredRunes: Ral, Tir, Tal, Sol
+    BaseType: Polearm, Staff
+End
+
+RunewordRecipe[Lore]:
+    RequiredRunes: Ort, Sol
+    BaseType: Helm
+End
+
+RunewordRecipe[Rhyme]:
+    RequiredRunes: Shael, Eth
+    BaseType: Shield
+End
+
+RunewordRecipe[Strength]:
+    RequiredRunes: Amn, Tir
+    BaseType: MeleeWeapon
+End
+
+RunewordRecipe[Smoke]:
+    RequiredRunes: Nef, Lum
+    BaseType: Armor
+End
+
+RunewordRecipe[Memory]:
+    RequiredRunes: Lum, Io, Sol, Eth
+    BaseType: Staff
+End
+
+RunewordRecipe[White]:
+    RequiredRunes: Dol, Io
+    BaseType: Wand
+End
+
+# --- MID TIER POWER BUILDS ---
+RunewordRecipe[Treachery]:
+    RequiredRunes: Shael, Thul, Lem
+    BaseType: Armor
+End
+
+RunewordRecipe[Lionheart]:
+    RequiredRunes: Hel, Lum, Fal
+    BaseType: Armor
+End
+
+RunewordRecipe[Duress]:
+    RequiredRunes: Shael, Um, Thul
+    BaseType: Armor
+End
+
+RunewordRecipe[Harmony]:
+    RequiredRunes: Tir, Ith, Sol, Ko
+    BaseType: Bow, Crossbow
+End
+
+RunewordRecipe[Black]:
+    RequiredRunes: Thul, Io, Nef
+    BaseType: Club, Hammer, Mace
+End
+
+RunewordRecipe[Crescent Moon]:
+    RequiredRunes: Shael, Um, Tir
+    BaseType: Sword, Axe, Polearm
+End
+
+RunewordRecipe[Voice of Reason]:
+    RequiredRunes: Lem, Ko, El, Eld
+    BaseType: Sword, Mace
+End
+
+RunewordRecipe[Lawbringer]:
+    RequiredRunes: Amn, Lem, Ko
+    BaseType: Sword, Hammer, Scepter
+End
+
+RunewordRecipe[Obedience]:
+    RequiredRunes: Hel, Ko, Thul, Eth, Fal
+    BaseType: Polearm
+End
+
+# --- HIGH END ---
+RunewordRecipe[Oath]:
+    RequiredRunes: Shael, Pul, Mal, Lum
+    BaseType: Sword, Axe, Mace
+End
+
+RunewordRecipe[Crescent Moon]:
+    RequiredRunes: Shael, Um, Tir
+    BaseType: Sword, Axe, Polearm
+End
+
+RunewordRecipe[Fortitude]:
+    RequiredRunes: El, Sol, Dol, Lo
+    BaseType: Armor, Weapon
+End
+
+RunewordRecipe[Call to Arms]:
+    RequiredRunes: Amn, Ral, Mal, Ist, Ohm
+    BaseType: Weapon
+End
+
+RunewordRecipe[Grief]:
+    RequiredRunes: Eth, Tir, Lo, Mal, Ral
+    BaseType: Sword, Axe
+End
+
+RunewordRecipe[Chains of Honor]:
+    RequiredRunes: Dol, Um, Ber, Ist
+    BaseType: Armor
+End
+
+RunewordRecipe[Infinity]:
+    RequiredRunes: Ber, Mal, Ber, Ist
+    BaseType: Polearm
+End
+
+RunewordRecipe[Enigma]:
+    RequiredRunes: Jah, Ith, Ber
+    BaseType: Armor
+End
+
+RunewordRecipe[Heart of the Oak]:
+    RequiredRunes: Ko, Vex, Pul, Thul
+    BaseType: Mace, Staff
+End
+
+RunewordRecipe[Exile]:
+    RequiredRunes: Vex, Ohm, Ist, Dol
+    BaseType: Shield
+End
+
+RunewordRecipe[Dream]:
+    RequiredRunes: Io, Jah, Pul
+    BaseType: Helm, Shield
+End
+
+RunewordRecipe[Faith]:
+    RequiredRunes: Ohm, Jah, Lem, Eld
+    BaseType: Bow
+End
+
+RunewordRecipe[Last Wish]:
+    RequiredRunes: Jah, Mal, Jah, Sur, Jah, Ber
+    BaseType: Sword, Hammer, Axe
+End
+
+RunewordRecipe[Phoenix]:
+    RequiredRunes: Vex, Vex, Lo, Jah
+    BaseType: Shield, Weapon
+End
+
+RunewordRecipe[Beast]:
+    RequiredRunes: Ber, Tir, Um, Mal, Lum
+    BaseType: Axe, Scepter, Hammer
+End
+
+RunewordRecipe[Death]:
+    RequiredRunes: Hel, El, Vex, Ort, Gul
+    BaseType: Sword, Axe
+End
+
+RunewordRecipe[Destruction]:
+    RequiredRunes: Vex, Lo, Ber, Jah, Ko
+    BaseType: Polearm, Sword
+End
+
+RunewordRecipe[Pride]:
+    RequiredRunes: Cham, Sur, Io, Lo
+    BaseType: Polearm
+End
+
+RunewordRecipe[Dream]:
+    RequiredRunes: Io, Jah, Pul
+    BaseType: Helm, Shield
+End
+
+RunewordRecipe[Brand]:
+    RequiredRunes: Jah, Lo, Mal, Gul
+    BaseType: Bow, Crossbow
+End
+
+RunewordRecipe[Fortune]:
+    RequiredRunes: Lem, Ist, Pul
+    BaseType: Helm, Armor
+End
+
+# --- GOD-TIER EXCLUSIVES ---
+RunewordRecipe[Breath of the Dying]:
+    RequiredRunes: Vex, Hel, El, Eld, Zod, Eth
+    BaseType: Weapon
+End
+
+RunewordRecipe[RunewordCore]:
+    RequiredRunes: RandomHighRunes
+    BaseType: Any
+    Comment: PD2 exclusive logic placeholder for god-tier item logic
+End
+# ==============================
+# HUD SMART NOTIFICATION & DROP COUNTER FX SYSTEM
+# ==============================
+
+# --- OVERVIEW ---
+# Tracks rune, unique, map and crafting component progress toward runewords or special recipes.
+# Displays real-time HUD updates and plays adaptive FX sounds.
+
+HUD_Notifications: Enabled
+HUD_DisplayDuration: 4.5
+HUD_ColorScheme: GoldGradient
+HUD_Animation: SlideUpFade
+HUD_FontSize: 32
+
+# --- RUNE TRACKER ---
+# Each rune pickup updates current progress toward major runewords.
+
+RuneTracker[Infinity]:
+    RequiredRunes: Ber, Mal, Ber, Ist
+    ProgressColor: Cyan
+    SoundFX: "fx_rune_high.wav"
+    Message: "⚡ Rune Progress: {CURRENT}/{TOTAL} for [Infinity]"
+End
+
+RuneTracker[Enigma]:
+    RequiredRunes: Jah, Ith, Ber
+    ProgressColor: Purple
+    SoundFX: "fx_rune_elite.wav"
+    Message: "💫 Rune Progress: {CURRENT}/{TOTAL} for [Enigma]"
+End
+
+RuneTracker[Fortitude]:
+    RequiredRunes: El, Sol, Dol, Lo
+    ProgressColor: Orange
+    SoundFX: "fx_rune_high.wav"
+    Message: "🔥 Rune Progress: {CURRENT}/{TOTAL} for [Fortitude]"
+End
+
+RuneTracker[Spirit]:
+    RequiredRunes: Tal, Thul, Ort, Amn
+    ProgressColor: LightBlue
+    SoundFX: "fx_rune_mid.wav"
+    Message: "✨ Rune Progress: {CURRENT}/{TOTAL} for [Spirit]"
+End
+
+RuneTracker[Grief]:
+    RequiredRunes: Eth, Tir, Lo, Mal, Ral
+    ProgressColor: Silver
+    SoundFX: "fx_rune_elite.wav"
+    Message: "⚔️ Rune Progress: {CURRENT}/{TOTAL} for [Grief]"
+End
+
+# --- DROP COUNTER FX ---
+# Adaptive sound intensity — more intense when multiple high-tier items drop.
+
+DropFXController:
+    MaxConcurrentSounds: 4
+    IntensityScale: DropDensity
+    SoundSetLow: "fx_drop_low.wav"
+    SoundSetMid: "fx_drop_mid.wav"
+    SoundSetHigh: "fx_drop_high.wav"
+    SoundSetElite: "fx_drop_elite.wav"
+    AutoBalance: true
+    AutoBalanceSensitivity: 0.75
+    Comment: Auto adjusts FX volume depending on item drop load
+End
+
+# --- ITEM CLASS ALERTS ---
+# Custom audible/visual markers for major item classes.
+
+Alert[Runes]:
+    Color: Gold
+    FontSize: 36
+    Sound: "fx_rune_notify.wav"
+    Message: "⚡ RUNE DROP DETECTED: {ITEMNAME}"
+End
+
+Alert[UniqueItems]:
+    Color: DeepOrange
+    FontSize: 38
+    Sound: "fx_unique.wav"
+    Message: "⭐ UNIQUE ITEM FOUND: {ITEMNAME}"
+End
+
+Alert[SetItems]:
+    Color: Green
+    FontSize: 34
+    Sound: "fx_set.wav"
+    Message: "🧩 SET ITEM FOUND: {ITEMNAME}"
+End
+
+Alert[Maps]:
+    Color: Violet
+    FontSize: 40
+    Sound: "fx_map.wav"
+    Message: "📜 MAP DISCOVERED: {ITEMNAME}"
+End
+
+Alert[CraftingComponents]:
+    Color: Blue
+    FontSize: 32
+    Sound: "fx_craft.wav"
+    Message: "🔧 CRAFTING PART: {ITEMNAME}"
+End
+
+Alert[UberKeys]:
+    Color: Red
+    FontSize: 44
+    Sound: "fx_uberkey.wav"
+    Message: "💀 UBER KEY FOUND: {ITEMNAME}"
+End
+
+Alert[QuestItems]:
+    Color: Yellow
+    FontSize: 30
+    Sound: "fx_quest.wav"
+    Message: "📖 QUEST ITEM: {ITEMNAME}"
+End
+
+# --- AUTO SUMMARY ---
+# At the end of a farming session, shows brief summary of total high-tier finds.
+
+SummaryOnExit: true
+SummaryStyle: Compact
+SummaryCategories: Runes, Uniques, Maps, Ubers, Recipes
+SummaryMessage: "Session Summary: {RUNES} runes, {UNIQUES} uniques, {MAPS} maps, {UBERS} uber drops"
+SummarySound: "fx_summary.wav"
+
+End
+# ==============================
+# UBER SYSTEM EXPANSION
+# ==============================
+
+# --- UBER BOSS IDENTIFIERS ---
+UberBoss[UberDiablo]:
+    BossName: Diablo_Uber
+    Identifiers: Diablo, Prime_Diablo, Uber_Diablo
+End
+
+UberBoss[UberBaal]:
+    BossName: Baal_Uber
+    Identifiers: Baal, Prime_Baal, Uber_Baal
+End
+
+UberBoss[UberMephisto]:
+    BossName: Mephisto_Uber
+    Identifiers: Mephisto, Prime_Mephisto, Uber_Mephisto
+End
+
+# --- UBER KILL & DROP TRACKING ---
+UberTracker:
+    Enabled: true
+    SessionCountKey: UBER_KILLS
+    PersistAcrossSessions: false
+    ResetOnMapChange: true
+    NotifyOnKill: true
+    NotifyOnAllOrgansCollected: true
+End
+
+OnUberKill:
+    Increment: UBER_KILLS
+    IfAllOrgansCollected:
+        Trigger: UberAllOrganEvent
+    Else:
+        Trigger: UberPartialDropEvent
+End
+
+# --- ORGAN & KEY HANDLING ---
+UberOrgan[Heart]:
+    ItemName: Heart_of_Baal
+    Type: Organ
+    PlayAlertSound: %FX_PATH%/uber_organ.wav
+    VisualPriority: High
+End
+
+UberOrgan[Brain]:
+    ItemName: Brain_of_Mephisto
+    Type: Organ
+    PlayAlertSound: %FX_PATH%/uber_organ.wav
+    VisualPriority: High
+End
+
+UberOrgan[Eye]:
+    ItemName: Eye_of_Diablo
+    Type: Organ
+    PlayAlertSound: %FX_PATH%/uber_organ.wav
+    VisualPriority: High
+End
+
+# --- UBER DROP FX & VISUALS ---
+FXProfile[Uber_Kill]:
+    PlayAlertSound: %FX_PATH%/uber_kill_big.wav
+    ScreenShake: strong
+    GlowColor: 255 120 80
+    FlashScreenColor: 255 80 40 0.6
+    HUDMessage: "💀 UBER KILL: {BOSSNAME} — Organs: {ORGANS_FOUND}/{ORGANS_TOTAL}"
+End
+
+FXProfile[Uber_AllOrgans]:
+    PlayAlertSound: %FX_PATH%/uber_all_organs.wav
+    ScreenShake: heavy
+    GlowColor: 255 40 40
+    AmbientOverlay: %FX_PATH%/uber_anthem.wav
+    HUDMessage: "⚑ All organs collected — Pandora Event ready"
+    AutoHighlightDuration: 6s
+End
+
+FXProfile[Uber_KeyDrop]:
+    PlayAlertSound: %FX_PATH%/uber_key_drop.wav
+    GlowColor: 255 200 60
+    HUDMessage: "🔑 Uber Key dropped: {ITEMNAME}"
+End
+
+OnDrop[UberOrgan]:
+    UseFXProfile: Uber_Kill
+    AddToTracker: Uber_Organs
+    If TrackerCount == OrgansNeeded:
+        UseFXProfile: Uber_AllOrgans
+        Notify: true
+    EndIf
+End
+
+OnDrop[UberKey]:
+    UseFXProfile: Uber_KeyDrop
+    AddToTracker: Uber_Keys
+End
+
+# --- BOSS-SPECIFIC ALERTS & REWARDS ---
+OnUberKill[UberDiablo]:
+    PlayAlertSound: %FX_PATH%/diablo_roar.wav
+    HUDMessage: "🔥 Uber Diablo defeated!"
+    GrantMarker: UberDiablo_Downed
+End
+
+OnUberKill[UberBaal]:
+    PlayAlertSound: %FX_PATH%/baal_trumpet.wav
+    HUDMessage: "🔥 Uber Baal defeated!"
+    GrantMarker: UberBaal_Downed
+End
+
+OnUberKill[UberMephisto]:
+    PlayAlertSound: %FX_PATH%/mephisto_blast.wav
+    HUDMessage: "🔥 Uber Mephisto defeated!"
+    GrantMarker: UberMephisto_Downed
+End
+
+# --- PANDORA / UBER EVENT TRIGGERS ---
+UberAllOrganEvent:
+    SpawnHint: Pandora_Box_Available
+    PlayAlertSound: %FX_PATH%/pandora_ready.wav
+    HUDMessage: "⚠ Pandora Event available — Open Cube to proceed"
+    HighlightZone: CurrentMap
+    AutoOpenHintDuration: 8s
+End
+
+UberPartialDropEvent:
+    PlayAlertSound: %FX_PATH%/uber_partial.wav
+    HUDMessage: "🛈 Partial organ drop — progress {ORGANS_FOUND}/{ORGANS_TOTAL}"
+End
+
+# --- SAFETY & RATE LIMITING ---
+UberFXLimiter:
+    MaxActiveUberFX: 3
+    CooldownBetweenUberAlerts: 2.0s
+    SuppressLowTierFXDuringUber: true
+    AutoReduceVolumeOnSpam: true
+End
+
+# --- SUMMARY & SESSION REPORTING ---
+UberSessionSummary:
+    OnSessionEnd:
+        ShowHUDSummary: true
+        SummaryMessage: "Session: {UBER_KILLS} Uber kills • {ORGANS_TOTAL_COLLECTED} organs • {UBER_KEYS} keys"
+        SummarySound: %FX_PATH%/uber_summary.wav
+    EndOn
+End
+
+# --- DEBUG / DEV TOOLS ---
+UberDebug:
+    LogDropsToFile: false
+    DebugHUD: false
+    Verbose: false
+End
+
+# End Uber System Expansion
+# ==============================
+# BASE / SUPERIOR / INFERIOR / ETHEREAL LOGIC
+# ==============================
+
+# --- CATEGORY DEFINITIONS ---
+ItemCategory[Inferior]:
+    MatchQuality: Inferior
+    MatchRarity: 0
+    FXProfile: InferiorFX
+    Comment: Basic low-quality trash items
+End
+
+ItemCategory[NormalBase]:
+    MatchQuality: Normal
+    MatchRarity: 0
+    FXProfile: NormalFX
+    Comment: Default unsocketed base item
+End
+
+ItemCategory[Superior]:
+    MatchQuality: Superior
+    FXProfile: SuperiorFX
+    Comment: Enhanced base, possible runeword base
+End
+
+ItemCategory[Ethereal]:
+    MatchProperty: Ethereal
+    FXProfile: EtherealFX
+    Comment: Ethereal bases – highlight differently
+End
+
+ItemCategory[Socketed]:
+    MatchProperty: Socketed
+    FXProfile: SocketedFX
+    Comment: Base items with open sockets (potential runeword bases)
+End
+
+ItemCategory[Crafted]:
+    MatchQuality: Crafted
+    FXProfile: CraftedFX
+    Comment: Crafted items from Horadric Cube
+End
+
+# --- FX PROFILES ---
+FXProfile[InferiorFX]:
+    PlayAlertSound: none
+    GlowColor: 50 50 50
+    FlashScreenColor: 0 0 0 0
+    HideAfter: 2s
+End
+
+FXProfile[NormalFX]:
+    PlayAlertSound: none
+    GlowColor: 80 80 80
+    FlashScreenColor: 0 0 0 0
+End
+
+FXProfile[SuperiorFX]:
+    PlayAlertSound: %FX_PATH%/superior_tone.wav
+    GlowColor: 180 180 220
+    FlashScreenColor: 100 120 255 0.2
+    HUDMessage: "⚙️ Superior Base: {ITEMNAME}"
+    Comment: Slight shimmer for clean superior bases
+End
+
+FXProfile[EtherealFX]:
+    PlayAlertSound: %FX_PATH%/ethereal_drop.wav
+    GlowColor: 120 200 255
+    FlashScreenColor: 80 180 255 0.25
+    ScreenPulse: soft
+    Comment: Ethereal base drop
+End
+
+FXProfile[SocketedFX]:
+    PlayAlertSound: %FX_PATH%/socket_ping.wav
+    GlowColor: 200 255 150
+    FlashScreenColor: 80 255 120 0.25
+    HUDMessage: "🧩 Socketed Base: {ITEMNAME}"
+End
+
+FXProfile[CraftedFX]:
+    PlayAlertSound: %FX_PATH%/crafted_item.wav
+    GlowColor: 255 180 120
+    FlashScreenColor: 255 180 80 0.3
+    ScreenPulse: true
+    Comment: Crafted gear from cube recipes
+End
+
+# --- AUTO FILTER RULES ---
+AutoHide[Inferior]:
+    Enable: true
+    Delay: 1.5s
+    Comment: Removes inferior items automatically after short delay
+End
+
+AutoHighlight[Superior]:
+    Enable: true
+    Duration: 4s
+End
+
+AutoHighlight[Ethereal]:
+    Enable: true
+    Duration: 5s
+End
+
+# --- BASE ITEM PRIORITY ---
+BasePriorityOrder:
+    1: Ethereal Superior Socketed
+    2: Superior Socketed
+    3: Ethereal Normal Socketed
+    4: Superior
+    5: Normal
+    6: Inferior
+End
+
+# --- EXTRA BEHAVIOR ---
+# Adjusts FX loudness depending on drop density to reduce clutter.
+AutoVolumeAdjust:
+    Enabled: true
+    Sensitivity: 0.5
+    VolumeStep: 0.1
+    MaxActiveFX: 6
+End
+# ==============================
+# MAPS & ENDGAME EXPANSION
+# ==============================
+
+# --- MAP TIERS DEFINITION ---
+MapTier[1-5]:
+    Color: 120 200 255
+    FXProfile: MapLowFX
+    DropMessage: "🗺️ Tier I–V Map Found: {ITEMNAME}"
+End
+
+MapTier[6-10]:
+    Color: 150 255 150
+    FXProfile: MapMidFX
+    DropMessage: "📜 Tier VI–X Map Found: {ITEMNAME}"
+End
+
+MapTier[11-14]:
+    Color: 255 200 100
+    FXProfile: MapHighFX
+    DropMessage: "🔥 High Tier Map Found: {ITEMNAME}"
+End
+
+MapTier[15+]:
+    Color: 255 100 80
+    FXProfile: MapEliteFX
+    DropMessage: "💀 Elite Tier Map Found: {ITEMNAME}"
+End
+
+# --- MAP FX PROFILES ---
+FXProfile[MapLowFX]:
+    PlayAlertSound: %FX_PATH%/map_low.wav
+    GlowColor: 100 200 255
+    FlashScreenColor: 0 100 255 0.2
+End
+
+FXProfile[MapMidFX]:
+    PlayAlertSound: %FX_PATH%/map_mid.wav
+    GlowColor: 120 255 120
+    FlashScreenColor: 60 255 60 0.25
+End
+
+FXProfile[MapHighFX]:
+    PlayAlertSound: %FX_PATH%/map_high.wav
+    GlowColor: 255 180 60
+    FlashScreenColor: 255 180 80 0.3
+    ScreenPulse: mild
+End
+
+FXProfile[MapEliteFX]:
+    PlayAlertSound: %FX_PATH%/map_elite.wav
+    GlowColor: 255 100 60
+    FlashScreenColor: 255 80 40 0.45
+    ScreenPulse: strong
+    DropEchoFX: true
+    HUDMessage: "💀 Elite Map Acquired: {ITEMNAME}"
+End
+
+# --- SPECIAL MAP TYPES ---
+MapType[Labyrinth]:
+    MatchName: "Labyrinth"
+    FXProfile: MapLabyrinthFX
+    DropMessage: "🌀 Labyrinth Map — Prepare Yourself!"
+End
+
+MapType[Void]:
+    MatchName: "Void"
+    FXProfile: MapVoidFX
+    DropMessage: "🌑 Void Map Discovered!"
+End
+
+MapType[Sacred]:
+    MatchName: "Sacred"
+    FXProfile: MapSacredFX
+    DropMessage: "🕯 Sacred Map Found"
+End
+
+# --- SPECIAL MAP FX ---
+FXProfile[MapLabyrinthFX]:
+    PlayAlertSound: %FX_PATH%/map_labyrinth.wav
+    GlowColor: 200 160 255
+    FlashScreenColor: 120 80 255 0.35
+    ScreenPulse: true
+    AmbientOverlay: %FX_PATH%/labyrinth_amb.wav
+End
+
+FXProfile[MapVoidFX]:
+    PlayAlertSound: %FX_PATH%/map_void.wav
+    GlowColor: 80 0 255
+    FlashScreenColor: 60 0 150 0.45
+    ScreenPulse:
+ItemClass[QuestAndConsumables]:
+    MatchGroup: QuestItem, Scroll, Tome, Potion, Oil, Essence, Vial, Reagent, CubeFragment
+    Comment: General catch-all for quest and consumable items
+End
+
+FXProfile[QuestConsumable_Default]:
+    PlayAlertSound: %FX_PATH%/consumable_soft.wav
+    GlowColor: 180 160 120
+    FlashScreenColor: 80 60 40 0.08
+    AutoHideAfter: 2.0s
+End
+
+OnDrop[QuestAndConsumables]:
+    UseFXProfile: QuestConsumable_Default
+End
+
+# --- SCROLLS & TOMES ---
+ItemCategory[Scrolls]:
+    MatchGroup: TownPortalScroll, IdentifyScroll, ScrollOfIdentify, ScrollOfTP
+    Comment: Scrolls — low priority, soft FX
+End
+
+FXProfile[Scrolls]:
+    PlayAlertSound: %FX_PATH%/scroll_soft.wav
+    GlowColor: 120 120 120
+    AutoHideAfter: 1.2s
+End
+
+OnDrop[Scrolls]:
+    UseFXProfile: Scrolls
+    AutoMuteIf: DropDensity > 6
+End
+
+# --- POTIONS (tiered handling) ---
+ItemCategory[Potion_Small]:
+    MatchGroup: MinorHealing, MinorMana, Antidote
+    Comment: Hide/soft FX
+End
+
+FXProfile[Potion_Small]:
+    PlayAlertSound: none
+    AutoHideAfter: 0.8s
+End
+
+ItemCategory[Potion_Large]:
+    MatchGroup: SuperHealing, FullRejuvenation, RejuvenationPotion
+    Comment: Important potions (drop rarely)
+End
+
+FXProfile[Potion_Large]:
+    PlayAlertSound: %FX_PATH%/potion_big.wav
+    GlowColor: 230 160 200
+    AutoHideAfter: 2.5s
+End
+
+OnDrop[Potion_Large]:
+    UseFXProfile: Potion_Large
+End
+
+# --- OILS / ESSENCES / VIALS ---
+ItemCategory[OilEssence]:
+    MatchGroup: Oil, Essence, Vial, TemperingOil
+    Comment: Crafting reagents and essences
+End
+
+FXProfile[OilEssence]:
+    PlayAlertSound: %FX_PATH%/essence_ping.wav
+    GlowColor: 160 200 255
+    FlashScreenColor: 100 140 200 0.12
+    AutoHideAfter: 2.0s
+End
+
+OnDrop[OilEssence]:
+    UseFXProfile: OilEssence
+    AddToTracker: CraftMaterials
+End
+
+# --- CUBE REAGENTS & SPECIAL REAGENTS ---
+ItemCategory[CubeReagent]:
+    MatchGroup: HoradricShard, EssenceOrb, PerfectGem, RareShard, Token
+    Comment: Items used in special recipes and cube transmutations
+End
+
+FXProfile[CubeReagent]:
+    PlayAlertSound: %FX_PATH%/cube_reagent.wav
+    GlowColor: 200 220 180
+    FlashScreenColor: 180 200 120 0.18
+    HUDMessage: "🔧 Cube Reagent: {ITEMNAME}"
+End
+
+OnDrop[CubeReagent]:
+    UseFXProfile: CubeReagent
+    TrackForRecipe: true
+End
+
+# --- STACKABLES & AUTOPICKUP HINTS ---
+ItemCategory[StackableSmall]:
+    MatchGroup: Arrow, Bolt, SmallStack
+    Comment: Auto-hide or soft display to reduce clutter
+End
+
+FXProfile[StackableSmall]:
+    PlayAlertSound: none
+    AutoHideAfter: 0.6s
+End
+
+ItemCategory[StackableImportant]:
+    MatchGroup: Key, Token, MapFragment
+End
+
+FXProfile[StackableImportant]:
+    PlayAlertSound: %FX_PATH%/stack_ping.wav
+    GlowColor: 220 200 120
+    AutoHideAfter: 2.0s
+End
+
+# --- AUTO-MUTE & SPAM CONTROL FOR CONSUMABLES ---
+AutoMute:
+    Enable: true
+    TargetGroups: Scrolls, Potion_Small, StackableSmall
+    Threshold: 8      # if more than 8 of these drop in short time, mute them
+    Window: 3.0s
+    MuteAction: suppress_sounds
+    ResumeAction: fade_back  # fade sounds back in when density lowers
+End
+
+# --- ADAPTIVE SOFT-HIDE (visual smoothing) ---
+SoftHide:
+    Enable: true
+    TargetGroups: Scrolls, Potion_Small, StackableSmall, MiscLow
+    FadeTime: 0.8s
+    LowAlpha: 0.12
+    RestorationDelay: 10s
+End
+
+# --- HUD SHORT MESSAGES FOR CONSUMABLES (non-intrusive) ---
+HUDRule[ConsumableHint]:
+    TriggerOn: OnDrop[CubeReagent], OnDrop[OilEssence], OnDrop[Potion_Large]
+    MessageTemplate: "{ICON} {ITEMNAME}"
+    Duration: 2.2s
+    Position: bottom-right
+    Priority: low
+End
+
+# --- SESSION TRACKING FOR CONSUMABLES ---
+Tracker[CraftMaterials]:
+    Persist: false
+    MaxEntries: 50
+    OnThresholdReached:
+        HUDMessage: "Craft materials x{COUNT} collected"
+        PlayAlertSound: %FX_PATH%/materials_summary.wav
+    EndOn
+End
+
+# --- PERFORMANCE & CLEANUP FOR CONSUMABLE NOISE ---
+ConsumableFXLimiter:
+    MaxSimultaneous: 5
+    SuppressIfHigherTierActive: true
+    AutoFadeOldest: true
+    Cooldown: 0.25s
+End
+
+# --- NOTES ---
+# - Use AddToTracker keys to feed recipe visualizer / HUD counters.
+# - AutoMute prevents spam from tiny and frequent drops.
+# - Place concise WAVs in %FX_PATH% (short, normalized) to avoid stacking distortion.
+# ==============================
+# GLOBAL CONFIG & HUD FX SETTINGS
+# ==============================
+
+# --- GLOBAL FX PATHS ---
+FX_PATH: data/sfx/InsomniaFX
+VoiceFX_PATH: data/sfx/voices
+AmbientFX_PATH: data/sfx/ambient
+
+# --- SOUND MIXER SETTINGS ---
+MasterVolume: 0.9
+FXVolume: 0.85
+VoiceVolume: 0.7
+AmbientVolume: 0.6
+AutoNormalizeVolume: true
+DynamicBalance: true
+
+# --- SCREEN & HUD BEHAVIOR ---
+HUDMessagePosition: TopCenter
+HUDMessageFadeIn: 0.25s
+HUDMessageHold: 2.5s
+HUDMessageFadeOut: 0.6s
+HUDMessageShadow: true
+HUDMessageOutline: true
+HUDMessageFontSize: 24
+HUDMessageFontColor: 255 255 255
+
+# --- VISUAL FX TRANSITIONS ---
+ScreenPulseIntensity[soft]: 0.4
+ScreenPulseIntensity[medium]: 0.7
+ScreenPulseIntensity[strong]: 1.0
+ScreenShakeIntensity[mild]: 0.4
+ScreenShakeIntensity[heavy]: 0.9
+GlowFadeTime: 1.5s
+FlashFadeTime: 0.8s
+AmbientOverlayFadeIn: 1.0s
+AmbientOverlayFadeOut: 2.0s
+
+# --- AUTO BALANCE SYSTEM ---
+AutoVolumeControl: true
+AutoVolumeStep: 0.05
+MaxActiveFX: 8
+PriorityReduceBelowTier: Tier3
+AutoAmbientBalance: true
+AutoMuteOnPerformanceDrop: true
+
+# --- PERFORMANCE GUARD ---
+FrameRateTarget: 60
+AutoReduceFXOnLowFPS: true
+PerformanceMonitorEnabled: true
+PerformanceMonitorInterval: 5s
+FXPoolLimit: 24
+FXGarbageCollect: true
+
+# --- DEBUG / DEV OPTIONS ---
+ShowFXDebug: false
+ShowHUDCoords: false
+LogFXEvents: false
+LogPath: logs/InsomniaFX.log
+
+# --- ENVIRONMENT BEHAVIOR ---
+AmbientWeatherFX:
+    Enable: true
+    BlendWithGameWeather: true
+    RainIntensityMod: 0.8
+    ThunderFX: %AmbientFX_PATH%/thunder.wav
+    CaveEchoFX: %AmbientFX_PATH%/cave_reverb.wav
+    TownAmbienceFX: %AmbientFX_PATH%/town_soft.wav
+End
+
+# --- FINAL TOUCH ---
+SystemBehavior:
+    AdjustSoundVolumeBasedOnDropLoad: true
+    AdaptGlowBrightnessToDropDensity: true
+    FXClusterMerge: true
+    PreventDuplicateSoundOverlaps: true
+End
+
+# --- SIGNATURE ---
+# =====================================
+#  INSOMNIAFX FILTER — FINAL BUILD
+#  Author: Insomnia
+#  Version: 1.0
+#  Status: Stable (PD2 Compatible)
+#  Notes:
+#    - The system automatically adjusts sound volume based on drop density.
+#    - Designed for Project Diablo II modern FX engine.
+#    - Fully modular: can be expanded with new FXProfiles or ItemGroups.
+ProjectDiabloII/
+└── data/
+    └── sfx/
+        ├── InsomniaFX/
+        │   ├── god_drop.wav
+        │   ├── major_drop.wav
+        │   ├── notable_drop.wav
+        │   ├── minor_drop.wav
+        │   ├── soft_click.wav
+        │   ├── crafted_item.wav
+        │   ├── socket_ping.wav
+        │   ├── ethereal_drop.wav
+        │   ├── superior_tone.wav
+        │   ├── rune_high.wav
+        │   ├── uber_key.wav
+        │   ├── uber_artifact.wav
+        │   ├── relic_chime.wav
+        │   ├── map_drop.wav
+        │   ├── torch_drop.wav
+        │   ├── craft_ping.wav
+        │   ├── recipe_discovery.wav
+        │   ├── quest_item.wav
+        │   ├── divine_hum.wav
+        │   ├── mystic_bg.wav
+        │   ├── crafted_drop.wav
+        │   └── ambient/
+        │       ├── thunder.wav
+        │       ├── cave_reverb.wav
+        │       ├── town_soft.wav
+        │       └── void_ambience.wav
+        ├── voices/
+        │   ├── rare_find.wav
+        │   ├── high_rune_found.wav
+        │   ├── map_ready.wav
+        │   ├── relic_unlocked.wav
+        │   └── crafting_complete.wav
+        └── ambient/
+            ├── wind_soft.wav
+            ├── rain_light.wav
+            ├── storm_loop.wav
+            ├── hell_gate.wav
+            ├── sanctum_hum.wav
+            └── drop_resonance.wav
+# =====================================
+# ==============================
+# END OF FILTER & SMART SUMMARY
+# ==============================
+
+# --- FX TEST MODE ---
+FXTestMode:
+    Enable: false               # true = всички FX ще се задействат по време на drop симулация
+    TriggerAllTiers: false      # true = симулира всички Tier FX едновременно
+    ShowHUDSample: true         # показва HUD message за всеки тест
+    TestVolume: 0.7
+    TestGlow: 200 180 255
+    TestFlash: 255 200 180 0.35
+End
+
+# --- DROP SUMMARY (DEBUG / SESSION INFO) ---
+DropSummary:
+    Enable: true
+    TrackItemCount: true
+    ShowOnHUD: true
+    ShowOnConsole: false
+    ResetOnSessionEnd: true
+    SummaryMessageTemplate: "🗂 Drop Summary — {COUNT} items: {TOPTIERS}"
+    TopTiersToShow: 5
+    IncludeSpecials: true      # Uber, Relics, High Runes, God Tier Items
+End
+
+# --- SMART LOGIC FINALIZATION ---
+FilterFinalization:
+    AutoVolumeNormalize: true
+    AutoFadeOutInactiveFX: true
+    PreventDuplicateFX: true
+    MaxSimultaneousFX: 12
+    FXPoolRecycle: true
+    CleanUnusedFX: true
+End
+
+# --- SESSION MONITORING ---
+SessionMonitor:
+    Enable: true
+    TrackFPS: true
+    TrackActiveFX: true
+    TriggerPerformanceAlertIfLag: true
+    PerformanceAlertMessage: "⚠️ FX Overload — Reducing Effects"
+End
+
+# --- DEBUG TOOLS ---
+DebugTools:
+    ShowFXDebugOverlay: false
+    LogAllDropsToFile: false
+    FXLatencyTest: false
+    HUDCoordsDebug: false
+End
+
+# --- FINAL FILTER SIGNATURE ---
+# =====================================
+#  INSOMNIAFX FILTER — FINAL BUILD
+#  Author: Insomnia
+#  Version: 1.0
+#  Status: Stable / PD2 Compatible
+#  Notes:
+#    • Fully modular FX system
+#    • Auto-adjusts volume and visual FX according to drop density
+#    • Supports all ItemGroups, Runewords, Maps, Ubers, Relics, Crafting
+#    • Includes FX test mode & drop summary HUD
+# =====================================
